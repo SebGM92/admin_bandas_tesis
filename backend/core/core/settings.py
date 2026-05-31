@@ -15,7 +15,7 @@ from pathlib import Path
 import os
 import mimetypes
 import dj_database_url  # type: ignore
-from dotenv import load_dotenv  # type: ignore
+from dotenv import load_dotenv   # type: ignore
 
 # Le enseñamos a Django a transmitir formatos de audio modernos correctamente
 mimetypes.add_type("audio/webm", ".webm", True)
@@ -215,3 +215,30 @@ EMAIL_USE_TLS = True
 # CAMBIO CRÍTICO: Ahora leemos las credenciales desde el entorno
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+
+# --- CONFIGURACIÓN DE BASE DE DATOS BLINDADA ---
+# Buscamos directamente la variable DATABASE_URL de Railway
+cloud_db_url = os.environ.get('DATABASE_URL')
+
+if cloud_db_url:
+    # Si la variable existe, estamos 100% seguros de que estamos en producción (Railway)
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=cloud_db_url,
+            conn_max_age=600,
+            ssl_require=True
+        )
+    }
+else:
+    # Si la variable no existe, estamos en tu PC trabajando localmente con Docker
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'bandadmin_db',
+            'USER': 'sebastian',
+            # Leemos la clave local de Docker desde el .env
+            'PASSWORD': os.environ.get('LOCAL_DB_PASSWORD'),
+            'HOST': '127.0.0.1',
+            'PORT': '5432',
+        }
+    }
