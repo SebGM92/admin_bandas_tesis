@@ -14,8 +14,8 @@ from datetime import timedelta
 from pathlib import Path
 import os
 import mimetypes
-import dj_database_url
-from dotenv import load_dotenv
+import dj_database_url  # type: ignore
+from dotenv import load_dotenv  # type: ignore
 
 # Le enseñamos a Django a transmitir formatos de audio modernos correctamente
 mimetypes.add_type("audio/webm", ".webm", True)
@@ -206,15 +206,12 @@ MEDIA_URL = '/media/'
 # La carpeta física en tu computador donde se guardarán los PDFs y audios
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# --- CONFIGURACIÓN DE CORREO ELECTRÓNICO (SMTP GMAIL) ---
+# --- CONFIGURACIÓN DE CORREOS SEGURA ---
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-# Tu correo real de Gmail
-EMAIL_HOST_USER = 'scolarverse2030@gmail.com'
-
-# ¡OJO! Esta NO es la contraseña con la que entras a tu correo.
-# Es una "Contraseña de Aplicación" de 16 letras que Google te genera.
-EMAIL_HOST_PASSWORD = 'gffjhubcpnlcsije'
+# CAMBIO CRÍTICO: Ahora leemos las credenciales desde el entorno
+EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
