@@ -21,8 +21,14 @@ function ContenedorLogin() {
                 // Le enviamos el token de Google a nuestro Django
                 const res = await fetch("http://127.0.0.1:8000/api/v1/usuarios/google/", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ access_token: tokenResponse.access_token }),
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": 'Bearer ${localStorage.getItem("access_token")}'
+                    },
+                    body: JSON.stringify({
+                        username: "SebaGuzman", // Recuerda probar sin espacios
+                        instrumento: "UUID-del-instrumento" // Asegúrate de que Django no espere un UUID aquí
+                    })
                 });
 
                 if (res.ok) {
