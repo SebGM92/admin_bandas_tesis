@@ -23,7 +23,7 @@ function ContenedorLogin() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": 'Bearer ${localStorage.getItem("access_token")}'
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`
                     },
                     body: JSON.stringify({
                         username: "SebaGuzman", // Recuerda probar sin espacios
