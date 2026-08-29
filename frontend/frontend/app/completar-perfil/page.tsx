@@ -22,8 +22,8 @@ export default function CompletarPerfil() {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    username: username,
-                    instrumento_principal: instrumento
+                    username: "SebaGuzman",
+                    instrumento_principal: "11de3308-44a4-4672-87ab-6c0d7e85abc1"
                 }),
             });
 
