@@ -5,6 +5,15 @@ from django.db import models
 from django.conf import settings
 
 
+class Instrumento(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    nombre = models.CharField(max_length=100)
+    familia = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return self.nombre
+
+
 class Banda(models.Model):
     nombre = models.CharField(
         max_length=100, verbose_name='Nombre de la Banda')
@@ -53,7 +62,7 @@ class Membresia(models.Model):
 
     class Meta:
         # --- AJUSTE: Un usuario solo puede tener un registro por banda ---
-        unique_together = ('usuario', 'banda')
+        unique_together = ('usuario', 'banda',)
 
     def __str__(self):
         return f"{self.usuario.username} - {self.rol} en {self.banda.nombre}"
@@ -176,3 +185,18 @@ class Gasto(models.Model):
 
     def __str__(self):
         return f"{self.descripcion} - ${self.monto} ({self.banda.nombre})"
+
+# Asegúrate de heredar del nombre exacto de tu clase original (ej. Instrumento)
+
+
+class InstrumentoProxy(Instrumento):
+    class Meta:
+        proxy = True  # Esto le dice a Django que NO cree una nueva tabla en la BD
+
+        # Aquí defines bajo qué categoría quieres que aparezca
+        # Reemplaza si tu app de usuarios se llama diferente (ej: 'users')
+        app_label = 'usuarios'
+
+        # El nombre que se mostrará en la interfaz
+        verbose_name = 'Instrumento'
+        verbose_name_plural = 'Instrumentos'
