@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { Card, Button, StatusIcon } from "@/components/ui/ui";
 
 export default function UnirseBanda() {
     const params = useParams();
@@ -61,56 +62,50 @@ export default function UnirseBanda() {
     }, [tokenInvitacion, router]);
 
     return (
-        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-            <div className="bg-gray-800 border border-gray-700 p-8 rounded-lg shadow-2xl max-w-md w-full text-center">
+        <div className="min-h-screen flex items-center justify-center p-4">
+            <div className="max-w-md w-full">
+                <Card className="text-center">
 
-                {estado === "cargando" && (
-                    <div className="animate-pulse">
-                        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl">⏳</span>
+                    {estado === "cargando" && (
+                        <div className="animate-pulse">
+                            <StatusIcon icon="hourglass" tone="brand" />
+                            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>Procesando enlace...</h2>
+                            <p className="text-sm" style={{ color: "var(--ba-text-muted)" }}>{mensaje}</p>
                         </div>
-                        <h2 className="text-xl font-bold text-white mb-2">Procesando enlace...</h2>
-                        <p className="text-gray-400 text-sm">{mensaje}</p>
-                    </div>
-                )}
+                    )}
 
-                {estado === "exito" && (
-                    <div>
-                        <div className="w-16 h-16 bg-green-500/20 border border-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl text-green-500">✓</span>
+                    {estado === "exito" && (
+                        <div>
+                            <StatusIcon icon="check" tone="success" />
+                            <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>¡Bienvenido!</h2>
+                            <p className="mb-6" style={{ color: "var(--ba-success)" }}>{mensaje}</p>
+                            <p className="text-sm mb-6" style={{ color: "var(--ba-text-subtle)" }}>Redirigiendo a tus bandas...</p>
+
+                            <Link href="/bandas">
+                                <Button variant="primary" block>Ir a mis bandas ahora</Button>
+                            </Link>
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">¡Bienvenido!</h2>
-                        <p className="text-green-400 mb-6">{mensaje}</p>
-                        <p className="text-gray-500 text-sm mb-6">Redirigiendo a tus bandas...</p>
+                    )}
 
-                        <Link href="/bandas" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition">
-                            Ir a mis bandas ahora
-                        </Link>
-                    </div>
-                )}
+                    {estado === "error" && (
+                        <div>
+                            <StatusIcon icon="x" tone="danger" />
+                            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>Enlace inválido</h2>
+                            <p className="mb-6" style={{ color: "var(--ba-danger)" }}>{mensaje}</p>
 
-                {estado === "error" && (
-                    <div>
-                        <div className="w-16 h-16 bg-red-500/20 border border-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl text-red-500">✗</span>
-                        </div>
-                        <h2 className="text-xl font-bold text-white mb-2">Enlace inválido</h2>
-                        <p className="text-red-400 mb-6">{mensaje}</p>
-
-                        <div className="space-y-3 flex flex-col">
                             {!localStorage.getItem("access_token") ? (
-                                <Link href="/login" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded transition">
-                                    Iniciar Sesión
+                                <Link href="/login">
+                                    <Button variant="primary" block>Iniciar Sesión</Button>
                                 </Link>
                             ) : (
-                                <Link href="/bandas" className="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded transition">
-                                    Volver al Dashboard
+                                <Link href="/bandas">
+                                    <Button variant="secondary" block>Volver al Dashboard</Button>
                                 </Link>
                             )}
                         </div>
-                    </div>
-                )}
+                    )}
 
+                </Card>
             </div>
         </div>
     );

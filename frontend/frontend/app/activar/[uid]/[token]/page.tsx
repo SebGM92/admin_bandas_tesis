@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { Card, Button, StatusIcon } from "@/components/ui/ui";
 
 export default function ActivacionCuenta() {
     const params = useParams();
@@ -35,55 +36,45 @@ export default function ActivacionCuenta() {
     }, [uid, token]);
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-            <div className="max-w-md w-full bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl text-center">
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+            <div className="max-w-md w-full">
+                <Card className="text-center">
 
-                {estado === "cargando" && (
-                    <div className="animate-pulse">
-                        <div className="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                            ⏳
+                    {estado === "cargando" && (
+                        <div className="animate-pulse">
+                            <StatusIcon icon="hourglass" tone="brand" />
+                            <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>Verificando...</h2>
+                            <p style={{ color: "var(--ba-text-muted)" }}>Estamos validando tu enlace de seguridad.</p>
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Verificando...</h2>
-                        <p className="text-gray-400">Estamos validando tu enlace de seguridad.</p>
-                    </div>
-                )}
+                    )}
 
-                {estado === "exito" && (
-                    <div>
-                        <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl text-emerald-500">
-                            ✓
+                    {estado === "exito" && (
+                        <div>
+                            <StatusIcon icon="check" tone="success" />
+                            <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>¡Cuenta Activada!</h2>
+                            <p className="mb-6" style={{ color: "var(--ba-text-muted)" }}>
+                                Tu identidad ha sido verificada. Ya puedes iniciar sesión y configurar tu perfil musical.
+                            </p>
+                            <Link href="/login">
+                                <Button variant="primary" block>Ir al Inicio de Sesión</Button>
+                            </Link>
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">¡Cuenta Activada!</h2>
-                        <p className="text-gray-400 mb-6">
-                            Tu identidad ha sido verificada. Ya puedes iniciar sesión y configurar tu perfil musical.
-                        </p>
-                        <Link
-                            href="/login"
-                            className="inline-block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all"
-                        >
-                            Ir al Inicio de Sesión
-                        </Link>
-                    </div>
-                )}
+                    )}
 
-                {estado === "error" && (
-                    <div>
-                        <div className="w-16 h-16 bg-red-500/20 border border-red-500 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl text-red-500">
-                            ✕
+                    {estado === "error" && (
+                        <div>
+                            <StatusIcon icon="x" tone="danger" />
+                            <h2 className="text-2xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>Enlace Inválido</h2>
+                            <p className="mb-6" style={{ color: "var(--ba-text-muted)" }}>
+                                El enlace de activación ha expirado, está mal escrito o la cuenta ya fue activada previamente.
+                            </p>
+                            <Link href="/registro">
+                                <Button variant="secondary" block>Volver a registrarse</Button>
+                            </Link>
                         </div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Enlace Inválido</h2>
-                        <p className="text-gray-400 mb-6">
-                            El enlace de activación ha expirado, está mal escrito o la cuenta ya fue activada previamente.
-                        </p>
-                        <Link
-                            href="/registro"
-                            className="inline-block w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-lg transition-all border border-gray-600"
-                        >
-                            Volver a registrarse
-                        </Link>
-                    </div>
-                )}
+                    )}
 
+                </Card>
             </div>
         </div>
     );

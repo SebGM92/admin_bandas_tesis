@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
+import { Card, Field, Input, Button } from "@/components/ui/ui";
 
 // 🔥 PEGA TU CLIENT ID AQUÍ (Solo el ID largo, no el secreto)
 const GOOGLE_CLIENT_ID = "548114914663-sgmf19g4ea99sm1nf7ekvhppvps8td86.apps.googleusercontent.com";
@@ -23,11 +24,10 @@ function ContenedorLogin() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        username: "SebaGuzman", // Recuerda probar sin espacios
-                        instrumento: "UUID-del-instrumento" // Asegúrate de que Django no espere un UUID aquí
-                    })
+                    }, // <-- ¡OJO! La llave de headers DEBE cerrar aquí, y llevar una coma.
+
+                    // El body debe estar al mismo nivel que 'method' y 'headers'
+                    body: JSON.stringify({ access_token: tokenResponse.access_token })
                 });
 
                 if (res.ok) {
@@ -63,24 +63,22 @@ function ContenedorLogin() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8 font-sans">
+        <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <span className="text-5xl block mb-4">🎸</span>
-                <h2 className="text-3xl font-extrabold text-white">Inicia Sesión o Regístrate</h2>
-                <p className="mt-2 text-sm text-gray-400">
+                <i className="ti ti-music" aria-hidden="true" style={{ fontSize: 40, color: "var(--ba-brand)" }} />
+                <h2 className="text-3xl font-extrabold mt-4" style={{ color: "var(--ba-text)" }}>
+                    Inicia sesión o regístrate
+                </h2>
+                <p className="mt-2 text-sm" style={{ color: "var(--ba-text-muted)" }}>
                     Tu centro de comando musical te está esperando.
                 </p>
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-                <div className="bg-white py-8 px-6 shadow sm:rounded-2xl border border-gray-200">
+                <Card>
 
                     {/* BOTÓN DE GOOGLE (Ahora ejecuta la función real) */}
-                    <button
-                        onClick={() => iniciarConGoogle()}
-                        disabled={procesando}
-                        className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 transition shadow-sm disabled:opacity-50"
-                    >
+                    <Button variant="secondary" block onClick={() => iniciarConGoogle()} disabled={procesando}>
                         <svg className="w-5 h-5" viewBox="0 0 24 24">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -88,36 +86,30 @@ function ContenedorLogin() {
                             <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                         </svg>
                         {procesando ? "Autenticando..." : "Continuar con Google"}
-                    </button>
+                    </Button>
 
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-200"></div>
+                            <div className="w-full" style={{ borderTop: "1px solid var(--ba-border)" }}></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-white text-gray-500 text-base">O</span>
+                            <span className="px-4" style={{ background: "var(--ba-surface)", color: "var(--ba-text-subtle)" }}>O</span>
                         </div>
                     </div>
 
-                    <form onSubmit={handleEmailContinue} className="space-y-4">
-                        <div>
-                            <input
+                    <form onSubmit={handleEmailContinue}>
+                        <Field label="Correo electrónico">
+                            <Input
                                 type="email" required
                                 value={email} onChange={(e) => setEmail(e.target.value)}
-                                className="appearance-none block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-gray-900 sm:text-base"
                                 placeholder="Ingresa tu correo electrónico"
                             />
-                        </div>
-                        <div>
-                            <button
-                                type="submit" disabled={procesando}
-                                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-base font-bold text-white bg-gray-900 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900 transition disabled:opacity-50"
-                            >
-                                Continuar con correo
-                            </button>
-                        </div>
+                        </Field>
+                        <Button type="submit" variant="primary" block disabled={procesando}>
+                            Continuar con correo
+                        </Button>
                     </form>
-                </div>
+                </Card>
             </div>
         </div>
     );

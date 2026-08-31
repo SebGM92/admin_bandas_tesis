@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Card, Field, Input, Select, Button } from "@/components/ui/ui";
 
 export default function CompletarPerfil() {
     const router = useRouter();
@@ -22,8 +23,8 @@ export default function CompletarPerfil() {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    username: "SebaGuzman",
-                    instrumento_principal: "11de3308-44a4-4672-87ab-6c0d7e85abc1"
+                    username: username,
+                    instrumento_principal: instrumento
                 }),
             });
 
@@ -41,52 +42,49 @@ export default function CompletarPerfil() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
-            <div className="max-w-md w-full bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
-                <div className="text-center mb-8">
-                    <span className="text-5xl">🤘</span>
-                    <h1 className="text-3xl font-bold text-white mt-4">¡Cuenta activada!</h1>
-                    <p className="text-gray-400 mt-2">Cuéntanos un poco sobre ti para terminar de configurar tu centro de comando.</p>
-                </div>
-
-                <form onSubmit={handleGuardar} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">Tu Apodo Musical (Username)</label>
-                        <input
-                            type="text" required
-                            value={username} onChange={(e) => setUsername(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                            placeholder="Ej: Slash_Chileno"
-                        />
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+            <div className="max-w-md w-full">
+                <Card>
+                    <div className="text-center mb-8">
+                        <i className="ti ti-microphone-2" aria-hidden="true" style={{ fontSize: 40, color: "var(--ba-brand)" }} />
+                        <h1 className="text-3xl font-bold mt-4" style={{ color: "var(--ba-text)" }}>¡Cuenta activada!</h1>
+                        <p className="mt-2" style={{ color: "var(--ba-text-muted)" }}>
+                            Cuéntanos un poco sobre ti para terminar de configurar tu centro de comando.
+                        </p>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-400 mb-2">¿Qué instrumento tocas?</label>
-                        <select
-                            required
-                            value={instrumento} onChange={(e) => setInstrumento(e.target.value)}
-                            className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                        >
-                            <option value="" disabled>Selecciona tu instumento...</option>
-                            <option value="VOZ">Cantante/Voz</option>
-                            <option value="GUITARRA">Guitarra</option>
-                            <option value="GUITARRA ELECTRICA">Guitarra Eléctrica</option>
-                            <option value="GUITARRA_VOZ">Guitarra & Voz</option>
-                            <option value="BAJO">Bajo</option>
-                            <option value="BATERIA">Batería</option>
-                            <option value="PIANO">Piano / Teclado</option>
-                            <option value="VIOLIN">Violín</option>
-                            <option value="SAXOFON">Saxofón</option>
-                        </select>
-                    </div>
+                    <form onSubmit={handleGuardar}>
+                        <Field label="Tu apodo musical (username)">
+                            <Input
+                                type="text" required
+                                value={username} onChange={(e) => setUsername(e.target.value)}
+                                placeholder="Ej: Slash_Chileno"
+                            />
+                        </Field>
 
-                    <button
-                        type="submit" disabled={procesando}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all transform hover:scale-105 disabled:opacity-50"
-                    >
-                        {procesando ? "Guardando..." : "Empezar a Rockear"}
-                    </button>
-                </form>
+                        <Field label="¿Qué instrumento tocas?">
+                            <Select
+                                required
+                                value={instrumento} onChange={(e) => setInstrumento(e.target.value)}
+                            >
+                                <option value="" disabled>Selecciona tu instrumento...</option>
+                                <option value="VOZ">Cantante/Voz</option>
+                                <option value="GUITARRA">Guitarra</option>
+                                <option value="GUITARRA ELECTRICA">Guitarra Eléctrica</option>
+                                <option value="GUITARRA_VOZ">Guitarra &amp; Voz</option>
+                                <option value="BAJO">Bajo</option>
+                                <option value="BATERIA">Batería</option>
+                                <option value="PIANO">Piano / Teclado</option>
+                                <option value="VIOLIN">Violín</option>
+                                <option value="SAXOFON">Saxofón</option>
+                            </Select>
+                        </Field>
+
+                        <Button type="submit" variant="primary" block disabled={procesando}>
+                            {procesando ? "Guardando..." : "Empezar a rockear"}
+                        </Button>
+                    </form>
+                </Card>
             </div>
         </div>
     );
