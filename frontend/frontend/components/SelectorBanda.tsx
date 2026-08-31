@@ -53,23 +53,24 @@ export default function SelectorBanda() {
     };
 
     if (cargando) {
-        return <div className="text-sm text-gray-500 animate-pulse">Cargando proyectos...</div>;
+        return <div className="text-sm animate-pulse" style={{ color: "var(--ba-text-subtle)" }}>Cargando proyectos...</div>;
     }
 
     if (bandas.length === 0) {
-        return <div className="text-sm text-red-400">Sin bandas registradas</div>;
+        return <div className="text-sm" style={{ color: "var(--ba-danger)" }}>Sin bandas registradas</div>;
     }
 
     return (
         <div className="flex items-center gap-2">
-            <label htmlFor="selector-banda" className="text-sm text-gray-400 hidden md:block">
+            <label htmlFor="selector-banda" className="text-sm hidden md:block" style={{ color: "var(--ba-text-muted)" }}>
                 Proyecto Activo:
             </label>
             <select
                 id="selector-banda"
                 value={bandaActiva?.id || ""}
                 onChange={manejarCambio}
-                className="bg-gray-900 border border-gray-700 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 cursor-pointer shadow-sm hover:border-gray-500 transition"
+                className="ba-select cursor-pointer shadow-sm"
+                style={{ width: "auto" }}
             >
                 <option value="" disabled>Selecciona una banda...</option>
                 {bandas.map(b => (
