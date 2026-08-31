@@ -1,0 +1,100 @@
+/* BandAdmin — sistema de tokens
+   Importar una sola vez, antes que cualquier otro CSS de la app. */
+
+:root {
+  /* --- Superficies --------------------------------------------------- */
+  --ba-bg:          #0B0F17;  /* fondo de la app */
+  --ba-surface:     #131A26;  /* tarjetas, paneles */
+  --ba-surface-2:   #1B2433;  /* anidado, hover, chips */
+  --ba-sidebar:     #0E141F;
+
+  /* --- Bordes -------------------------------------------------------- */
+  --ba-border:        #243043;
+  --ba-border-strong: #2C3A50;
+
+  /* --- Texto --------------------------------------------------------- */
+  --ba-text:        #E6EAF2;
+  --ba-text-muted:  #8A94A6;
+  --ba-text-subtle: #5F6875;
+
+  /* --- Marca y estados ----------------------------------------------- */
+  --ba-brand:        #3B82F6;
+  --ba-brand-hover:  #2563EB;
+  --ba-brand-soft:   rgba(59, 130, 246, 0.14);
+  --ba-on-brand:     #FFFFFF;
+
+  --ba-success:      #22C55E;
+  --ba-success-soft: rgba(34, 197, 94, 0.14);
+  --ba-warning:      #F59E0B;
+  --ba-warning-soft: rgba(245, 158, 11, 0.14);
+  --ba-danger:       #EF4444;
+  --ba-danger-soft:  rgba(239, 68, 68, 0.14);
+
+  /* Estados del catálogo. Un solo lugar donde cambiarlos. */
+  --ba-status-por-tocar:    var(--ba-text-subtle);
+  --ba-status-aprendizaje:  var(--ba-warning);
+  --ba-status-activo:       var(--ba-success);
+
+  /* --- Tipografía ------------------------------------------------------ */
+  --ba-font: var(--ba-font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ba-font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --ba-text-page:    30px;  /* título de página */
+  --ba-text-section: 20px;  /* título de sección */
+  --ba-text-card:    16px;  /* título de tarjeta */
+  --ba-text-body:    14px;
+  --ba-text-meta:    12px;
+
+  --ba-weight-normal: 400;
+  --ba-weight-medium: 500;
+  --ba-weight-bold:   600;
+
+  /* --- Espaciado (escala de 4) --------------------------------------- */
+  --ba-space-1: 4px;
+  --ba-space-2: 8px;
+  --ba-space-3: 12px;
+  --ba-space-4: 16px;
+  --ba-space-6: 24px;
+  --ba-space-8: 32px;
+  --ba-space-12: 48px;
+
+  /* --- Radios -------------------------------------------------------- */
+  --ba-radius-sm:   6px;   /* chips, badges */
+  --ba-radius:      8px;   /* inputs, botones */
+  --ba-radius-card: 12px;  /* tarjetas */
+  --ba-radius-full: 999px;
+
+  /* --- Otros --------------------------------------------------------- */
+  --ba-transition: 140ms ease;
+  --ba-ring: 0 0 0 3px var(--ba-brand-soft);
+  --ba-sidebar-width: 240px;
+}
+
+/* Reset mínimo y base de la app */
+html {
+  color-scheme: dark; /* hace que los inputs nativos de fecha/archivo salgan oscuros */
+}
+
+body {
+  margin: 0;
+  background: var(--ba-bg);
+  color: var(--ba-text);
+  font-family: var(--ba-font);
+  font-size: var(--ba-text-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:focus-visible {
+  outline: 2px solid var(--ba-brand);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
