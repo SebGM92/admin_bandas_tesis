@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useBanda } from "@/context/BandaContext";
+import { Card, Field, Input, Button, Badge, EmptyState, Modal } from "@/components/ui/ui";
 
 type EstadoCancion = 'Por tocar' | 'En Aprendizaje' | 'Repertorio Activo';
 
@@ -13,6 +14,12 @@ interface Cancion {
     partitura?: string;
     en_setlist?: boolean;
 }
+
+const COLUMNAS: { estado: EstadoCancion; label: string; dot: string }[] = [
+    { estado: 'Por tocar', label: 'Por Tocar', dot: 'var(--ba-status-por-tocar)' },
+    { estado: 'En Aprendizaje', label: 'En Aprendizaje', dot: 'var(--ba-status-aprendizaje)' },
+    { estado: 'Repertorio Activo', label: 'Repertorio Activo', dot: 'var(--ba-status-activo)' },
+];
 
 export default function CatalogoPage() {
     const { bandaActiva } = useBanda();
@@ -96,7 +103,7 @@ export default function CatalogoPage() {
         }
     };
 
-    // --- NUEVO: ELIMINAR CANCIÓN ---
+    // --- ELIMINAR CANCIÓN ---
     const handleEliminarCancion = async (id: number) => {
         if (!window.confirm("¿Estás seguro de que deseas eliminar esta canción del catálogo? Esta acción no se puede deshacer.")) return;
 
@@ -195,150 +202,107 @@ export default function CatalogoPage() {
 
     if (!bandaActiva) {
         return (
-            <div className="flex flex-col items-center justify-center h-[60vh] text-center text-gray-500">
-                Selecciona un proyecto activo para administrar su Catálogo Musical.
+            <div className="flex flex-col items-center justify-center h-[60vh]">
+                <EmptyState
+                    icon="disc"
+                    title="Ningún proyecto seleccionado"
+                    body="Selecciona un proyecto activo para administrar su catálogo musical."
+                />
             </div>
         );
     }
 
     return (
-        <div className="max-w-7xl mx-auto p-4 space-y-8">
-            <div className="flex justify-between items-center bg-gray-800 p-5 rounded-2xl border border-gray-700 shadow-lg">
+        <div className="max-w-7xl mx-auto space-y-8">
+            <Card className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Catálogo Musical</h1>
-                    <p className="text-gray-400">Repertorio y estado de aprendizaje para <strong className="text-blue-400">{bandaActiva.nombre}</strong></p>
+                    <h1 className="ba-page-title" style={{ marginBottom: 4 }}>Catálogo Musical</h1>
+                    <p style={{ color: "var(--ba-text-muted)", margin: 0 }}>
+                        Repertorio y estado de aprendizaje para{" "}
+                        <strong style={{ color: "var(--ba-brand)" }}>{bandaActiva.nombre}</strong>
+                    </p>
                 </div>
-                <button
-                    onClick={() => setMostrarFormulario(!mostrarFormulario)}
-                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2.5 px-5 rounded-lg shadow transition"
-                >
-                    {mostrarFormulario ? "✕ Cerrar Panel" : "＋ Nueva Canción"}
-                </button>
-            </div>
+                <Button variant="primary" icon="plus" onClick={() => setMostrarFormulario(true)}>
+                    Nueva canción
+                </Button>
+            </Card>
 
-            {mostrarFormulario && (
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-inner">
-                    <form onSubmit={handleAgregarCancion} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-gray-400 text-sm mb-1.5 font-medium">Título de la Canción</label>
-                                <input
-                                    type="text" required value={nuevoTitulo} onChange={(e) => setNuevoTitulo(e.target.value)}
-                                    placeholder="Ej: Tren al Sur..."
-                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-gray-400 text-sm mb-1.5 font-medium">Artista Original / Compositor</label>
-                                <input
-                                    type="text" value={nuevoArtista} onChange={(e) => setNuevoArtista(e.target.value)}
-                                    placeholder="Ej: Los Prisioneros..."
-                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-                        </div>
+            <Modal open={mostrarFormulario} onClose={() => setMostrarFormulario(false)} title="Nueva canción">
+                <form onSubmit={handleAgregarCancion} className="space-y-4">
+                    <Field label="Título de la canción">
+                        <Input
+                            type="text" required value={nuevoTitulo} onChange={(e) => setNuevoTitulo(e.target.value)}
+                            placeholder="Ej: Tren al Sur..."
+                        />
+                    </Field>
+                    <Field label="Artista original / compositor">
+                        <Input
+                            type="text" value={nuevoArtista} onChange={(e) => setNuevoArtista(e.target.value)}
+                            placeholder="Ej: Los Prisioneros..."
+                        />
+                    </Field>
 
-                        <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-                            <label className="block text-gray-400 text-sm mb-2 font-medium">
-                                Adjuntar Partitura, Tablatura o Cifrado <span className="text-gray-500 text-xs">(Opcional - Formato PDF)</span>
-                            </label>
-                            <input
-                                type="file" accept=".pdf"
-                                onChange={(e) => {
-                                    if (e.target.files && e.target.files[0]) {
-                                        setArchivoPartitura(e.target.files[0]);
-                                    }
-                                }}
-                                className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600 file:cursor-pointer cursor-pointer"
-                            />
-                        </div>
+                    <div className="p-4 rounded-lg" style={{ background: "var(--ba-bg)", border: "1px solid var(--ba-border)" }}>
+                        <label className="ba-label">
+                            Adjuntar partitura, tablatura o cifrado{" "}
+                            <span style={{ color: "var(--ba-text-subtle)", fontWeight: 400 }}>(Opcional, PDF)</span>
+                        </label>
+                        <input
+                            type="file" accept=".pdf"
+                            onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    setArchivoPartitura(e.target.files[0]);
+                                }
+                            }}
+                            className="block w-full text-sm cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:cursor-pointer"
+                            style={{ color: "var(--ba-text-muted)" }}
+                        />
+                    </div>
 
-                        <div className="flex justify-end">
-                            <button
-                                type="submit" disabled={procesando}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg transition disabled:opacity-50"
-                            >
-                                {procesando ? "Guardando..." : "Agregar al Repertorio"}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            )}
+                    <div className="flex justify-end gap-3">
+                        <Button type="button" variant="ghost" onClick={() => setMostrarFormulario(false)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={procesando}>
+                            {procesando ? "Guardando..." : "Agregar al repertorio"}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
 
             {cargando ? (
-                <p className="text-center text-gray-400 animate-pulse py-10">Sincronizando catálogo...</p>
+                <p className="text-center animate-pulse py-10" style={{ color: "var(--ba-text-muted)" }}>
+                    Sincronizando catálogo...
+                </p>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-
-                    {/* COLUMNA 1: POR TOCAR */}
-                    <div className="bg-gray-900/40 rounded-2xl p-5 border border-gray-800/50 min-h-75" onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e, 'Por tocar')}>
-                        <h2 className="text-lg font-semibold text-gray-400 mb-5 flex items-center gap-2.5">
-                            <span className="w-3 h-3 rounded-full bg-gray-600"></span>
-                            Por Tocar
-                            <span className="bg-gray-800 text-gray-500 text-xs font-bold px-2 py-0.5 rounded-md ml-auto">
-                                {canciones.filter(c => c.estado === 'Por tocar').length}
-                            </span>
-                        </h2>
-                        <div className="space-y-4">
-                            {canciones.filter(c => c.estado === 'Por tocar').map(cancion => (
-                                <TarjetaCancion
-                                    key={cancion.id}
-                                    cancion={cancion}
-                                    onDragStart={handleOnDragStart}
-                                    onDragEnd={handleOnDragEnd}
-                                    onToggleSetlist={toggleSetlist}
-                                    onEliminar={handleEliminarCancion} // Pasamos la nueva función
-                                />
-                            ))}
+                    {COLUMNAS.map(({ estado, label, dot }) => (
+                        <div
+                            key={estado}
+                            className="rounded-2xl p-5 min-h-75"
+                            style={{ background: "var(--ba-surface-2)", border: "1px solid var(--ba-border)" }}
+                            onDragOver={handleOnDragOver}
+                            onDrop={(e) => handleOnDrop(e, estado)}
+                        >
+                            <h2 className="text-lg font-semibold mb-5 flex items-center gap-2.5" style={{ color: "var(--ba-text-muted)" }}>
+                                <span className="w-3 h-3 rounded-full" style={{ background: dot }}></span>
+                                {label}
+                                <Badge className="ml-auto">{canciones.filter(c => c.estado === estado).length}</Badge>
+                            </h2>
+                            <div className="space-y-4">
+                                {canciones.filter(c => c.estado === estado).map(cancion => (
+                                    <TarjetaCancion
+                                        key={cancion.id}
+                                        cancion={cancion}
+                                        onDragStart={handleOnDragStart}
+                                        onDragEnd={handleOnDragEnd}
+                                        onToggleSetlist={toggleSetlist}
+                                        onEliminar={handleEliminarCancion}
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
-
-                    {/* COLUMNA 2: EN APRENDIZAJE */}
-                    <div className="bg-gray-900/40 rounded-2xl p-5 border border-gray-800/50 min-h-75" onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e, 'En Aprendizaje')}>
-                        <h2 className="text-lg font-semibold text-amber-300 mb-5 flex items-center gap-2.5">
-                            <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-                            En Aprendizaje
-                            <span className="bg-gray-800 text-amber-500/80 text-xs font-bold px-2 py-0.5 rounded-md ml-auto">
-                                {canciones.filter(c => c.estado === 'En Aprendizaje').length}
-                            </span>
-                        </h2>
-                        <div className="space-y-4">
-                            {canciones.filter(c => c.estado === 'En Aprendizaje').map(cancion => (
-                                <TarjetaCancion
-                                    key={cancion.id}
-                                    cancion={cancion}
-                                    onDragStart={handleOnDragStart}
-                                    onDragEnd={handleOnDragEnd}
-                                    onToggleSetlist={toggleSetlist}
-                                    onEliminar={handleEliminarCancion}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* COLUMNA 3: REPERTORIO ACTIVO */}
-                    <div className="bg-gray-900/40 rounded-2xl p-5 border border-gray-800/50 min-h-75" onDragOver={handleOnDragOver} onDrop={(e) => handleOnDrop(e, 'Repertorio Activo')}>
-                        <h2 className="text-lg font-semibold text-emerald-400 mb-5 flex items-center gap-2.5">
-                            <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Repertorio Activo
-                            <span className="bg-gray-800 text-emerald-500/80 text-xs font-bold px-2 py-0.5 rounded-md ml-auto">
-                                {canciones.filter(c => c.estado === 'Repertorio Activo').length}
-                            </span>
-                        </h2>
-                        <div className="space-y-4">
-                            {canciones.filter(c => c.estado === 'Repertorio Activo').map(cancion => (
-                                <TarjetaCancion
-                                    key={cancion.id}
-                                    cancion={cancion}
-                                    onDragStart={handleOnDragStart}
-                                    onDragEnd={handleOnDragEnd}
-                                    onToggleSetlist={toggleSetlist}
-                                    onEliminar={handleEliminarCancion}
-                                />
-                            ))}
-                        </div>
-                    </div>
-
+                    ))}
                 </div>
             )}
         </div>
@@ -351,26 +315,26 @@ interface TarjetaCancionProps {
     onDragStart: (e: React.DragEvent, id: number) => void;
     onDragEnd: (e: React.DragEvent) => void;
     onToggleSetlist: (id: number, valorActual: boolean) => void;
-    onEliminar: (id: number) => void; // Prop para el botón de eliminar
+    onEliminar: (id: number) => void;
 }
 
 function TarjetaCancion({ cancion, onDragStart, onDragEnd, onToggleSetlist, onEliminar }: TarjetaCancionProps) {
+    const enSetlist = cancion.en_setlist || false;
+
     return (
-        <div
-            className="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow hover:border-gray-500 transition-all duration-150 cursor-grab active:cursor-grabbing flex items-center justify-between gap-4 group"
+        <Card
+            interactive
+            className="cursor-grab active:cursor-grabbing flex items-center justify-between gap-4"
+            style={{ padding: "var(--ba-space-4)" }}
             draggable="true"
             onDragStart={(e) => onDragStart(e, cancion.id)}
             onDragEnd={onDragEnd}
         >
             <div className="flex items-center gap-3 min-w-0">
-                <div className="text-gray-600">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                </div>
+                <i className="ti ti-grip-vertical" aria-hidden="true" style={{ color: "var(--ba-text-subtle)" }} />
                 <div className="truncate">
-                    <h3 className="font-bold text-white text-base leading-tight truncate">{cancion.titulo}</h3>
-                    <p className="text-xs text-gray-400 truncate">{cancion.artista || "Autor Desconocido"}</p>
+                    <h3 className="font-bold text-base leading-tight truncate" style={{ color: "var(--ba-text)" }}>{cancion.titulo}</h3>
+                    <p className="text-xs truncate" style={{ color: "var(--ba-text-muted)" }}>{cancion.artista || "Autor Desconocido"}</p>
                 </div>
             </div>
 
@@ -378,16 +342,12 @@ function TarjetaCancion({ cancion, onDragStart, onDragEnd, onToggleSetlist, onEl
 
                 {/* BOTÓN ESTRELLA: SETLIST DE LA SEMANA */}
                 <button
-                    onClick={() => onToggleSetlist(cancion.id, cancion.en_setlist || false)}
-                    title={cancion.en_setlist ? "Quitar del Setlist de esta semana" : "Agregar al Setlist de esta semana"}
-                    className={`transition p-1 rounded-md border ${cancion.en_setlist
-                        ? "text-yellow-400 bg-yellow-400/10 border-yellow-400/30 hover:bg-yellow-400/20"
-                        : "text-gray-500 bg-gray-900/50 border-gray-700 hover:text-yellow-400 hover:border-gray-600"
-                        }`}
+                    onClick={() => onToggleSetlist(cancion.id, enSetlist)}
+                    title={enSetlist ? "Quitar del Setlist de esta semana" : "Agregar al Setlist de esta semana"}
+                    className="ba-icon-btn"
+                    style={enSetlist ? { color: "var(--ba-warning)", background: "var(--ba-warning-soft)" } : undefined}
                 >
-                    <svg className="w-5 h-5" fill={cancion.en_setlist ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
+                    <i className={`ti ${enSetlist ? "ti-star-filled" : "ti-star"}`} aria-hidden="true" />
                 </button>
 
                 {/* BOTÓN DESCARGA/VISTA DE PARTITURA */}
@@ -397,31 +357,22 @@ function TarjetaCancion({ cancion, onDragStart, onDragEnd, onToggleSetlist, onEl
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Abrir partitura PDF"
-                        className="text-red-400 hover:text-red-300 transition p-1 bg-gray-900/50 rounded-md border border-gray-700"
+                        className="ba-icon-btn"
+                        style={{ color: "var(--ba-danger)" }}
                     >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                        <i className="ti ti-file-type-pdf" aria-hidden="true" />
                     </a>
                 )}
 
-                {/* BOTÓN ELIMINAR CANCIÓN (Basurero) */}
+                {/* BOTÓN ELIMINAR CANCIÓN */}
                 <button
                     onClick={() => onEliminar(cancion.id)}
                     title="Eliminar del Catálogo"
-                    className="text-gray-500 hover:text-red-400 bg-gray-900/50 hover:bg-gray-800 transition p-1 rounded-md border border-gray-700 hover:border-red-400/30"
+                    className="ba-icon-btn ba-icon-btn--danger"
                 >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <i className="ti ti-trash" aria-hidden="true" />
                 </button>
-
-                {/* PUNTO DE COLOR DEL ESTADO */}
-                <span className={`w-2 h-2 ml-1 rounded-full ${cancion.estado === 'Repertorio Activo' ? 'bg-emerald-500' :
-                    cancion.estado === 'En Aprendizaje' ? 'bg-amber-500' :
-                        'bg-gray-600'
-                    }`}></span>
             </div>
-        </div>
+        </Card>
     );
 }

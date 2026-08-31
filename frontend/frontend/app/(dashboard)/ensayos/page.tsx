@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useBanda } from "@/context/BandaContext";
+import { Card, Field, Input, Textarea, Button, Badge, EmptyState, Modal } from "@/components/ui/ui";
+import { groupByDay, formatTimeRange } from "@/components/ui/format";
 
 interface Ensayo {
     id: number;
@@ -20,6 +22,7 @@ export default function EnsayosPage() {
     const [ubicacion, setUbicacion] = useState("");
     const [objetivo, setObjetivo] = useState("");
     const [procesando, setProcesando] = useState(false);
+    const [mostrarFormulario, setMostrarFormulario] = useState(false);
 
     // Cargar los ensayos de la banda activa
     useEffect(() => {
@@ -86,6 +89,7 @@ export default function EnsayosPage() {
                 setFechaFin("");
                 setUbicacion("");
                 setObjetivo("");
+                setMostrarFormulario(false);
             } else {
                 alert("Error al guardar el ensayo. Verifica los datos.");
             }
@@ -96,162 +100,146 @@ export default function EnsayosPage() {
         }
     };
 
-    // Función auxiliar para formatear la fecha de forma legible
-    const formatearRangoHorario = (inicioStr: string, finStr: string) => {
-        const fechaInicio = new Date(inicioStr);
-        const fechaFin = new Date(finStr);
-
-        const opcionesFecha: Intl.DateTimeFormatOptions = {
-            weekday: 'long', day: 'numeric', month: 'long'
-        };
-        const opcionesHora: Intl.DateTimeFormatOptions = {
-            hour: '2-digit', minute: '2-digit', hour12: false
-        };
-
-        const fechaBase = fechaInicio.toLocaleDateString('es-CL', opcionesFecha);
-        const horaInicio = fechaInicio.toLocaleTimeString('es-CL', opcionesHora);
-        const horaFin = fechaFin.toLocaleTimeString('es-CL', opcionesHora);
-
-        return `${fechaBase} | ${horaInicio} - ${horaFin}`;
-    };
-
     if (!bandaActiva) {
         return (
             <div className="flex items-center justify-center h-full">
-                <p className="text-gray-400 text-lg">Selecciona un proyecto activo en la parte superior para administrar sus ensayos.</p>
+                <p className="text-lg" style={{ color: "var(--ba-text-muted)" }}>
+                    Selecciona un proyecto activo en la parte superior para administrar sus ensayos.
+                </p>
             </div>
         );
     }
 
+    const dias = groupByDay(ensayos, (e) => e.fecha_hora_inicio);
+
     return (
-        <div className="max-w-6xl mx-auto p-4 flex flex-col lg:flex-row gap-8">
+        <div className="max-w-6xl mx-auto space-y-6">
 
-            {/* AGENDAR NUEVO ENSAYO */}
-            <div className="w-full lg:w-1/3">
-                <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg sticky top-6">
-                    <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                        📅 Agendar Nuevo Ensayo
-                    </h2>
-                    <form onSubmit={handleGuardarEnsayo} className="space-y-4">
-                        <div>
-                            <label className="block text-gray-400 text-sm mb-1">Inicio del Ensayo</label>
-                            <input
-                                type="datetime-local" required
-                                value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)}
-                                className="w-full bg-gray-900 border border-gray-600 rounded p-3 text-white text-sm outline-none focus:border-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-400 text-sm mb-1">Fin del Ensayo</label>
-                            <input
-                                type="datetime-local" required
-                                value={fechaFin} onChange={(e) => setFechaFin(e.target.value)}
-                                className="w-full bg-gray-900 border border-gray-600 rounded p-3 text-white text-sm outline-none focus:border-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-400 text-sm mb-1">Ubicación o Link de Reunión</label>
-                            <input
-                                type="text"
-                                value={ubicacion} onChange={(e) => setUbicacion(e.target.value)}
-                                placeholder="Ej: Sala 3 (Estudio) o Link de Zoom/Meet"
-                                className="w-full bg-gray-900 border border-gray-600 rounded p-3 text-white text-sm outline-none focus:border-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-400 text-sm mb-1">Objetivo del Ensayo</label>
-                            <textarea
-                                value={objetivo} onChange={(e) => setObjetivo(e.target.value)}
-                                rows={3}
-                                placeholder="Ej: Pulir las transiciones del setlist y revisar estructuras..."
-                                className="w-full bg-gray-900 border border-gray-600 rounded p-3 text-white text-sm outline-none focus:border-blue-500 resize-none"
-                            />
-                        </div>
-
-                        <button
-                            type="submit" disabled={procesando}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 shadow-md"
-                        >
-                            {procesando ? "Guardando..." : "Guardar Ensayo"}
-                        </button>
-                    </form>
-                </div>
+            <div className="flex justify-between items-center">
+                <h2 className="ba-section-title">Agenda de Ensayos: {bandaActiva.nombre}</h2>
+                <Button variant="primary" icon="plus" onClick={() => setMostrarFormulario(true)}>
+                    Agendar ensayo
+                </Button>
             </div>
 
-            {/* CRONOGRAMA DE ENSAYOS (HISTORIAL / PRÓXIMOS) */}
-            <div className="w-full lg:w-2/3">
-                <h2 className="text-2xl font-bold text-white mb-6">Agenda de Ensayos: {bandaActiva.nombre}</h2>
-
+            <div>
                 {ensayos.length === 0 ? (
-                    <div className="bg-gray-800 p-8 rounded-xl border border-gray-700 text-center text-gray-400">
-                        No hay ensayos agendados para este proyecto musical todavía.
-                    </div>
+                    <Card>
+                        <EmptyState
+                            icon="calendar-event"
+                            title="Sin ensayos agendados"
+                            body="Todavía no hay ensayos agendados para este proyecto musical."
+                        />
+                    </Card>
                 ) : (
-                    <div className="space-y-4">
-                        {ensayos.map((ensayo) => {
-                            const esPasado = new Date(ensayo.fecha_hora_fin) < new Date();
+                    <div className="space-y-8">
+                        {dias.map((dia) => (
+                            <section key={dia.key}>
+                                <p className="ba-label" style={{ marginBottom: "var(--ba-space-3)" }}>{dia.heading}</p>
+                                <div className="space-y-4">
+                                    {dia.items.map((ensayo) => {
+                                        const esPasado = new Date(ensayo.fecha_hora_fin) < new Date();
+                                        const esLink = ensayo.ubicacion?.startsWith("http");
 
-                            return (
-                                <div
-                                    key={ensayo.id}
-                                    className={`p-5 rounded-xl border transition shadow-sm flex flex-col gap-4 ${esPasado
-                                        ? 'bg-gray-800/40 border-gray-800 text-gray-500'
-                                        : 'bg-gray-800 border-gray-700 hover:border-blue-500 text-white'
-                                        }`}
-                                >
-                                    {/* CABECERA: Fecha/Hora y Ubicación */}
-                                    <div className="flex flex-col xl:flex-row justify-between items-start gap-4">
+                                        return (
+                                            <Card
+                                                key={ensayo.id}
+                                                nested={esPasado}
+                                                className="flex flex-col gap-4"
+                                            >
+                                                {/* CABECERA: Hora y ubicación */}
+                                                <div className="flex flex-col xl:flex-row justify-between items-start gap-4">
+                                                    <div className="flex items-center gap-2 w-full">
+                                                        <i
+                                                            className="ti ti-clock"
+                                                            aria-hidden="true"
+                                                            style={{ color: esPasado ? "var(--ba-text-subtle)" : "var(--ba-brand)" }}
+                                                        />
+                                                        <p
+                                                            className="font-semibold text-lg"
+                                                            style={{ color: esPasado ? "var(--ba-text-subtle)" : "var(--ba-brand)" }}
+                                                        >
+                                                            {formatTimeRange(ensayo.fecha_hora_inicio, ensayo.fecha_hora_fin)}
+                                                        </p>
+                                                        {esPasado && <Badge className="ml-auto xl:ml-2">Realizado</Badge>}
+                                                    </div>
 
-                                        {/* Título y Fecha */}
-                                        <div className="flex items-center gap-2 w-full">
-                                            <span className="text-xl shrink-0">⏱️</span>
-                                            <p className={`font-semibold capitalize text-lg ${esPasado ? 'text-gray-500' : 'text-blue-400'}`}>
-                                                {formatearRangoHorario(ensayo.fecha_hora_inicio, ensayo.fecha_hora_fin)}
-                                            </p>
-                                            {esPasado && (
-                                                <span className="bg-gray-700 text-gray-400 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0 ml-auto xl:ml-2">
-                                                    Realizado
-                                                </span>
-                                            )}
-                                        </div>
+                                                    {ensayo.ubicacion && (
+                                                        esLink ? (
+                                                            <a href={ensayo.ubicacion} target="_blank" rel="noopener noreferrer">
+                                                                <Badge tone="brand" icon="map-pin">Enlace virtual</Badge>
+                                                            </a>
+                                                        ) : (
+                                                            <Badge icon="map-pin">{ensayo.ubicacion}</Badge>
+                                                        )
+                                                    )}
+                                                </div>
 
-                                        {/* ETIQUETA DE UBICACIÓN (Mejorada para no cortarse) */}
-                                        {ensayo.ubicacion && (
-                                            <div className="flex items-start gap-2 bg-gray-900/60 border border-gray-700/80 px-3.5 py-2 rounded-lg w-full xl:w-auto xl:max-w-xs shrink-0">
-                                                <span className="text-red-400 mt-0.5 shrink-0">📍</span>
-                                                {ensayo.ubicacion.startsWith("http") ? (
-                                                    <a
-                                                        href={ensayo.ubicacion} target="_blank" rel="noopener noreferrer"
-                                                        className="text-blue-400 hover:underline text-sm leading-snug wrap-break-word whitespace-normal"
+                                                {/* CUERPO: Objetivo (truncado a 2 líneas) */}
+                                                {ensayo.objetivo && (
+                                                    <p
+                                                        className="text-sm leading-relaxed ba-clamp-2"
+                                                        style={{ color: esPasado ? "var(--ba-text-subtle)" : "var(--ba-text-muted)" }}
                                                     >
-                                                        Enlace Virtual
-                                                    </a>
-                                                ) : (
-                                                    <span className={`text-sm leading-snug wrap-break-word whitespace-normal ${esPasado ? 'text-gray-500' : 'text-gray-300'}`}>
-                                                        {ensayo.ubicacion}
-                                                    </span>
+                                                        <strong style={{ color: esPasado ? "var(--ba-text-subtle)" : "var(--ba-text)" }}>
+                                                            Objetivo:
+                                                        </strong>{" "}
+                                                        {ensayo.objetivo}
+                                                    </p>
                                                 )}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* CUERPO: Objetivo */}
-                                    {ensayo.objetivo && (
-                                        <div className={`${esPasado ? 'text-gray-600' : 'text-gray-300'}`}>
-                                            <p className="text-sm leading-relaxed">
-                                                <strong className="text-gray-400">Objetivo:</strong> {ensayo.objetivo}
-                                            </p>
-                                        </div>
-                                    )}
+                                            </Card>
+                                        );
+                                    })}
                                 </div>
-                            );
-                        })}
+                            </section>
+                        ))}
                     </div>
                 )}
             </div>
+
+            {/* AGENDAR NUEVO ENSAYO (lateral -> modal en cualquier tamaño de pantalla) */}
+            <Modal open={mostrarFormulario} onClose={() => setMostrarFormulario(false)} title="Agendar nuevo ensayo">
+                <form onSubmit={handleGuardarEnsayo} className="space-y-4">
+                    <Field label="Inicio del ensayo">
+                        <Input
+                            type="datetime-local" required
+                            value={fechaInicio} onChange={(e) => setFechaInicio(e.target.value)}
+                        />
+                    </Field>
+
+                    <Field label="Fin del ensayo">
+                        <Input
+                            type="datetime-local" required
+                            value={fechaFin} onChange={(e) => setFechaFin(e.target.value)}
+                        />
+                    </Field>
+
+                    <Field label="Ubicación o link de reunión">
+                        <Input
+                            type="text"
+                            value={ubicacion} onChange={(e) => setUbicacion(e.target.value)}
+                            placeholder="Ej: Sala 3 (Estudio) o Link de Zoom/Meet"
+                        />
+                    </Field>
+
+                    <Field label="Objetivo del ensayo">
+                        <Textarea
+                            value={objetivo} onChange={(e) => setObjetivo(e.target.value)}
+                            rows={3}
+                            placeholder="Ej: Pulir las transiciones del setlist y revisar estructuras..."
+                        />
+                    </Field>
+
+                    <div className="flex justify-end gap-3">
+                        <Button type="button" variant="ghost" onClick={() => setMostrarFormulario(false)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={procesando}>
+                            {procesando ? "Guardando..." : "Guardar ensayo"}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

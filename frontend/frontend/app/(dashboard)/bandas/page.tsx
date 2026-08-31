@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Card, Field, Input, Button, IconButton, Modal, EmptyState } from "@/components/ui/ui";
 
 interface Banda {
     id: number;
@@ -12,12 +12,11 @@ interface Banda {
 }
 
 export default function MisBandas() {
-    const router = useRouter();
     const [bandas, setBandas] = useState<Banda[]>([]);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
 
-    // --- NUEVOS ESTADOS PARA CREAR BANDA ---
+    // --- ESTADOS PARA CREAR BANDA ---
     const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
     const [nombreBanda, setNombreBanda] = useState("");
     const [procesandoCreacion, setProcesandoCreacion] = useState(false);
@@ -153,166 +152,123 @@ export default function MisBandas() {
         alert("¡Enlace copiado al portapapeles!");
     };
 
-    if (cargando) return <div className="text-gray-400 p-8 animate-pulse">Cargando tus agrupaciones...</div>;
-    if (error) return <div className="text-red-400 p-8">{error}</div>;
+    const cerrarModalInvitar = () => {
+        setBandaAInvitar(null);
+        setEnlaceGenerado("");
+    };
+
+    if (cargando) return <p className="p-8 animate-pulse" style={{ color: "var(--ba-text-muted)" }}>Cargando tus agrupaciones...</p>;
+    if (error) return <p className="p-8" style={{ color: "var(--ba-danger)" }}>{error}</p>;
 
     return (
-        <div className="p-6 relative">
+        <div className="relative">
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-4xl font-bold mb-2">Mis Bandas</h1>
-                    <p className="text-gray-400">Selecciona un proyecto para administrar su catálogo y miembros.</p>
+                    <h1 className="ba-page-title">Mis Bandas</h1>
+                    <p style={{ color: "var(--ba-text-muted)" }}>Selecciona un proyecto para administrar su catálogo y miembros.</p>
                 </div>
-                {/* BOTÓN SUPERIOR ACTIVADO */}
-                <button
-                    onClick={() => setMostrarModalCrear(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow transition"
-                >
-                    + Nueva Banda
-                </button>
+                <Button variant="primary" icon="plus" onClick={() => setMostrarModalCrear(true)}>
+                    Nueva banda
+                </Button>
             </div>
 
             {bandas.length === 0 ? (
-                <div className="bg-gray-800 rounded-lg p-12 text-center border border-gray-700">
-                    <p className="text-gray-400 text-lg mb-4">Aún no perteneces a ninguna banda.</p>
-                    {/* BOTÓN CENTRAL ACTIVADO */}
-                    <button
-                        onClick={() => setMostrarModalCrear(true)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow transition"
-                    >
-                        Crear mi primera banda
-                    </button>
-                </div>
+                <Card>
+                    <EmptyState
+                        icon="users-group"
+                        title="Aún no perteneces a ninguna banda"
+                        action={
+                            <Button variant="primary" onClick={() => setMostrarModalCrear(true)}>
+                                Crear mi primera banda
+                            </Button>
+                        }
+                    />
+                </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {bandas.map((banda) => (
-                        <div key={banda.id} className="relative group bg-gray-800 p-6 rounded-lg shadow-md border border-gray-700 hover:border-blue-500 transition duration-200 flex flex-col justify-between h-full">
-
-                            <button
+                        <Card key={banda.id} interactive className="relative group flex flex-col justify-between h-full">
+                            <IconButton
+                                icon="trash"
+                                label="Eliminar banda"
+                                danger
                                 onClick={(e) => handleEliminarBanda(e, banda.id, banda.nombre)}
-                                className="absolute top-4 right-4 text-gray-500 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900/50 hover:bg-gray-900 p-2 rounded-full z-10"
-                                title="Eliminar banda"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
+                                className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            />
 
                             <Link href={`/bandas/${banda.id}`} className="block flex-1 cursor-pointer">
-                                <div>
-                                    <h3 className="text-xl font-bold mb-2 pr-8">{banda.nombre}</h3>
-                                    <p className="text-gray-400 text-sm mb-4">Género: {banda.genero_musical || "No especificado"}</p>
-                                </div>
+                                <h3 className="text-xl font-bold mb-2 pr-8" style={{ color: "var(--ba-text)" }}>{banda.nombre}</h3>
+                                <p className="text-sm mb-4" style={{ color: "var(--ba-text-muted)" }}>
+                                    Género: {banda.genero_musical || "No especificado"}
+                                </p>
                             </Link>
 
-                            <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
+                            <div className="flex justify-between items-center mt-4 pt-4" style={{ borderTop: "1px solid var(--ba-border)" }}>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); setBandaAInvitar(banda); }}
-                                    className="text-green-400 text-sm hover:underline flex items-center gap-1"
+                                    className="text-sm hover:underline flex items-center gap-1"
+                                    style={{ color: "var(--ba-success)" }}
                                 >
-                                    <span>+</span> Invitar Músicos
+                                    <i className="ti ti-user-plus" aria-hidden="true" /> Invitar músicos
                                 </button>
-                                <Link href={`/bandas/${banda.id}`}>
-                                    <span className="text-blue-400 text-sm hover:underline cursor-pointer">Administrar →</span>
+                                <Link href={`/bandas/${banda.id}`} className="text-sm hover:underline flex items-center gap-1" style={{ color: "var(--ba-brand)" }}>
+                                    Administrar <i className="ti ti-arrow-right" aria-hidden="true" />
                                 </Link>
                             </div>
-                        </div>
+                        </Card>
                     ))}
                 </div>
             )}
 
             {/* --- MODAL PARA CREAR BANDA --- */}
-            {mostrarModalCrear && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 px-4">
-                    <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 w-full max-w-md shadow-2xl">
-                        <h2 className="text-2xl font-bold text-white mb-4">Crear Nueva Banda</h2>
-                        <form onSubmit={handleCrearBanda}>
-                            <div className="mb-4">
-                                <label className="block text-gray-300 text-sm font-bold mb-2">
-                                    Nombre del Proyecto Musical
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    autoFocus
-                                    value={nombreBanda}
-                                    onChange={(e) => setNombreBanda(e.target.value)}
-                                    className="w-full bg-gray-900 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                    placeholder="Ej: Los Prisioneros, Soda Stereo..."
-                                />
-                            </div>
-                            <div className="flex justify-end gap-3 mt-6">
-                                <button
-                                    type="button"
-                                    onClick={() => setMostrarModalCrear(false)}
-                                    className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600 transition"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={procesandoCreacion || !nombreBanda.trim()}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 transition disabled:opacity-50"
-                                >
-                                    {procesandoCreacion ? "Creando..." : "Crear Banda"}
-                                </button>
-                            </div>
-                        </form>
+            <Modal open={mostrarModalCrear} onClose={() => setMostrarModalCrear(false)} title="Crear nueva banda">
+                <form onSubmit={handleCrearBanda}>
+                    <Field label="Nombre del proyecto musical">
+                        <Input
+                            type="text"
+                            required
+                            autoFocus
+                            value={nombreBanda}
+                            onChange={(e) => setNombreBanda(e.target.value)}
+                            placeholder="Ej: Los Prisioneros, Soda Stereo..."
+                        />
+                    </Field>
+                    <div className="flex justify-end gap-3">
+                        <Button type="button" variant="secondary" onClick={() => setMostrarModalCrear(false)}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" variant="primary" disabled={procesandoCreacion || !nombreBanda.trim()}>
+                            {procesandoCreacion ? "Creando..." : "Crear banda"}
+                        </Button>
                     </div>
-                </div>
-            )}
+                </form>
+            </Modal>
 
-            {/* --- MODAL DE INVITACIONES (El tuyo intacto) --- */}
-            {bandaAInvitar && (
-                <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full border border-gray-700 shadow-2xl">
-                        <h3 className="text-2xl font-bold mb-2">Invitar a {bandaAInvitar.nombre}</h3>
-                        <p className="text-gray-400 text-sm mb-6">
-                            Genera un enlace único de invitación. Este enlace será válido por 7 días y solo podrá ser usado una vez.
-                        </p>
+            {/* --- MODAL DE INVITACIONES --- */}
+            <Modal open={!!bandaAInvitar} onClose={cerrarModalInvitar} title={`Invitar a ${bandaAInvitar?.nombre ?? ""}`}>
+                <p className="text-sm mb-6" style={{ color: "var(--ba-text-muted)" }}>
+                    Genera un enlace único de invitación. Este enlace será válido por 7 días y solo podrá ser usado una vez.
+                </p>
 
-                        {!enlaceGenerado ? (
-                            <div className="flex justify-center mb-6">
-                                <button
-                                    onClick={generarEnlace}
-                                    disabled={generando}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 font-bold rounded-lg disabled:opacity-50 w-full transition"
-                                >
-                                    {generando ? 'Generando código...' : 'Generar Enlace de Invitación'}
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="mb-6">
-                                <label className="block text-sm font-medium mb-2 text-gray-300">Enlace generado:</label>
-                                <div className="flex bg-gray-900 border border-gray-600 rounded overflow-hidden">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={enlaceGenerado}
-                                        className="w-full p-3 bg-transparent text-white outline-none text-sm"
-                                    />
-                                    <button
-                                        onClick={copiarAlPortapapeles}
-                                        className="bg-gray-700 hover:bg-gray-600 px-4 text-white transition"
-                                        title="Copiar"
-                                    >
-                                        Copiar
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex justify-end border-t border-gray-700 pt-4 mt-2">
-                            <button
-                                onClick={() => { setBandaAInvitar(null); setEnlaceGenerado(""); }}
-                                className="px-4 py-2 text-gray-400 hover:text-white"
-                            >
-                                Cerrar
-                            </button>
+                {!enlaceGenerado ? (
+                    <Button variant="primary" block disabled={generando} onClick={generarEnlace}>
+                        {generando ? "Generando código..." : "Generar enlace de invitación"}
+                    </Button>
+                ) : (
+                    <Field label="Enlace generado">
+                        <div className="flex gap-2">
+                            <Input type="text" readOnly value={enlaceGenerado} />
+                            <Button variant="secondary" icon="copy" onClick={copiarAlPortapapeles}>
+                                Copiar
+                            </Button>
                         </div>
-                    </div>
+                    </Field>
+                )}
+
+                <div className="flex justify-end pt-4 mt-4" style={{ borderTop: "1px solid var(--ba-border)" }}>
+                    <Button variant="ghost" onClick={cerrarModalInvitar}>Cerrar</Button>
                 </div>
-            )}
+            </Modal>
         </div>
     );
 }

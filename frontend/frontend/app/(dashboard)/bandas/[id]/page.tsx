@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import WaveSurfer from "wavesurfer.js";
+import { Card, Button, IconButton, Badge, Avatar, Modal, Field, Input, EmptyState } from "@/components/ui/ui";
 
 interface BandaDetalle {
     id: number;
@@ -16,6 +18,62 @@ interface Pista {
     id: number;
     titulo: string;
     archivo_audio: string; // La URL que nos devolverá Django
+}
+
+// WaveSurfer dibuja directo en <canvas>, así que no puede resolver var(--ba-*):
+// leemos el valor ya calculado del token en tiempo de montaje.
+function tokenColor(nombre: string) {
+    if (typeof window === "undefined") return "#000000";
+    return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
+}
+
+// --- REPRODUCTOR CON FORMA DE ONDA (reemplaza al <audio> nativo) ---
+function WaveformPlayer({ src }: { src: string }) {
+    const contenedorRef = useRef<HTMLDivElement>(null);
+    const wavesurferRef = useRef<WaveSurfer | null>(null);
+    const [listo, setListo] = useState(false);
+    const [reproduciendo, setReproduciendo] = useState(false);
+
+    useEffect(() => {
+        if (!contenedorRef.current) return;
+
+        setListo(false);
+        const ws = WaveSurfer.create({
+            container: contenedorRef.current,
+            url: src,
+            height: 40,
+            barWidth: 2,
+            barGap: 2,
+            barRadius: 2,
+            cursorWidth: 1,
+            waveColor: tokenColor("--ba-border-strong"),
+            progressColor: tokenColor("--ba-brand"),
+            cursorColor: tokenColor("--ba-text-muted"),
+        });
+
+        wavesurferRef.current = ws;
+        ws.on("ready", () => setListo(true));
+        ws.on("play", () => setReproduciendo(true));
+        ws.on("pause", () => setReproduciendo(false));
+        ws.on("finish", () => setReproduciendo(false));
+
+        return () => {
+            ws.destroy();
+        };
+    }, [src]);
+
+    return (
+        <div className="flex items-center gap-3">
+            <IconButton
+                icon={reproduciendo ? "player-pause-filled" : "player-play-filled"}
+                label={reproduciendo ? "Pausar" : "Reproducir"}
+                disabled={!listo}
+                onClick={() => wavesurferRef.current?.playPause()}
+                style={{ color: "var(--ba-brand)" }}
+            />
+            <div ref={contenedorRef} className="flex-1 min-w-0" />
+        </div>
+    );
 }
 
 export default function PerfilBanda() {
@@ -238,74 +296,77 @@ export default function PerfilBanda() {
         }
     };
 
-    if (cargando) return <div className="text-gray-400 p-8">Cargando...</div>;
-    if (!banda) return <div className="text-gray-400 p-8">Banda no encontrada.</div>;
+    if (cargando) return <p className="p-8" style={{ color: "var(--ba-text-muted)" }}>Cargando...</p>;
+    if (!banda) return <p className="p-8" style={{ color: "var(--ba-text-muted)" }}>Banda no encontrada.</p>;
 
     return (
         <div className="relative max-w-6xl mx-auto">
-            <Link href="/bandas" className="text-gray-400 hover:text-white mb-6 inline-block transition">
-                ← Volver a Mis Bandas
+            <Link
+                href="/bandas"
+                className="mb-6 inline-flex items-center gap-1 text-sm transition"
+                style={{ color: "var(--ba-text-muted)" }}
+            >
+                <i className="ti ti-arrow-left" aria-hidden="true" /> Volver a Mis Bandas
             </Link>
 
-            <div className="bg-gray-800 rounded-xl p-8 shadow-md border border-gray-700 mb-8">
-                <h1 className="text-4xl font-bold mb-2 text-white">{banda.nombre}</h1>
-                <p className="text-blue-400 font-semibold">{banda.genero_musical || "Género no especificado"}</p>
-            </div>
+            <Card className="mb-8">
+                <h1 className="text-4xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>{banda.nombre}</h1>
+                <p className="font-semibold" style={{ color: "var(--ba-brand)" }}>{banda.genero_musical || "Género no especificado"}</p>
+            </Card>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
-                {/* --- SECCIÓN ALINEACIÓN DINÁMICA --- */}
-                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-md h-fit">
-                    <h2 className="text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-2 flex items-center gap-2">
-                        <span>🎸</span> Alineación
+                {/* --- SECCIÓN ALINEACIÓN --- */}
+                <Card className="h-fit">
+                    <h2 className="ba-section-title mb-6 pb-2 flex items-center gap-2" style={{ borderBottom: "1px solid var(--ba-border)" }}>
+                        <i className="ti ti-users" aria-hidden="true" style={{ color: "var(--ba-brand)" }} /> Alineación
                     </h2>
 
                     {alineacion.length === 0 ? (
-                        <p className="text-gray-500 text-sm italic">No hay miembros registrados aún.</p>
+                        <p className="text-sm italic" style={{ color: "var(--ba-text-subtle)" }}>No hay miembros registrados aún.</p>
                     ) : (
                         <div className="space-y-4">
                             {alineacion.map((miembro) => (
-                                <div key={miembro.id} className="bg-gray-900 p-4 rounded-lg border border-gray-700 flex items-center gap-4 hover:border-gray-600 transition">
-                                    <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center font-bold text-lg shadow-inner shrink-0">
-                                        {miembro.nombre_usuario?.charAt(0).toUpperCase() || "?"}
-                                    </div>
+                                <div
+                                    key={miembro.id}
+                                    className="p-4 rounded-lg flex items-center gap-4 transition"
+                                    style={{ background: "var(--ba-surface-2)", border: "1px solid var(--ba-border)" }}
+                                >
+                                    <Avatar name={miembro.nombre_usuario || "?"} size={48} />
                                     <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-white text-lg leading-tight truncate">
+                                        <p className="font-bold text-lg leading-tight truncate" style={{ color: "var(--ba-text)" }}>
                                             {miembro.nombre_usuario || "Usuario Desconocido"}
                                         </p>
-                                        <p className="text-sm text-gray-400 font-medium truncate">
+                                        <p className="text-sm font-medium truncate" style={{ color: "var(--ba-text-muted)" }}>
                                             {miembro.instrumento || "Músico"}
                                         </p>
                                     </div>
-                                    <div className="shrink-0">
-                                        <span className={`text-[10px] font-bold px-2.5 py-1.5 rounded-full uppercase tracking-wider border ${miembro.rol === 'Líder'
-                                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                                            : 'bg-gray-800 text-gray-400 border-gray-700'
-                                            }`}>
-                                            {miembro.rol}
-                                        </span>
-                                    </div>
+                                    <Badge tone={miembro.rol === 'Líder' ? 'warning' : 'neutral'} className="shrink-0">
+                                        {miembro.rol}
+                                    </Badge>
                                 </div>
                             ))}
                         </div>
                     )}
-                </div>
+                </Card>
 
-                {/* --- SECCIÓN REPERTORIO / PISTAS DINÁMICA --- */}
-                <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-md">
-                    <div className="flex justify-between items-center mb-6 border-b border-gray-700 pb-2">
-                        <h2 className="text-2xl font-bold flex items-center gap-2">
-                            <span>🎧</span> Pistas y Maquetas
+                {/* --- SECCIÓN REPERTORIO / PISTAS --- */}
+                <Card>
+                    <div className="flex justify-between items-center mb-6 pb-2" style={{ borderBottom: "1px solid var(--ba-border)" }}>
+                        <h2 className="ba-section-title flex items-center gap-2">
+                            <i className="ti ti-headphones" aria-hidden="true" style={{ color: "var(--ba-brand)" }} /> Pistas y Maquetas
                         </h2>
-                        <button onClick={() => setMostrarModal(true)} className="bg-blue-600 hover:bg-blue-500 transition px-4 py-2 rounded-lg text-sm font-bold shadow-sm">
-                            + Agregar Pista
-                        </button>
+                        <Button variant="primary" size="sm" icon="plus" onClick={() => setMostrarModal(true)}>
+                            Agregar pista
+                        </Button>
                     </div>
 
                     {pistas.length === 0 ? (
-                        <p className="text-gray-500 py-10 text-center border-2 border-dashed border-gray-700 rounded-xl bg-gray-900/30">
-                            Aún no se han subido maquetas o ideas musicales.
-                        </p>
+                        <EmptyState
+                            icon="music-off"
+                            title="Sin maquetas todavía"
+                            body="Aún no se han subido maquetas o ideas musicales."
+                        />
                     ) : (
                         <div className="space-y-4">
                             {pistas.map((pista) => {
@@ -319,116 +380,140 @@ export default function PerfilBanda() {
                                     : `${baseUrl}${pista.archivo_audio.startsWith('/') ? '' : '/'}${pista.archivo_audio}`;
 
                                 return (
-                                    <div key={pista.id} className="bg-gray-900 p-4 rounded-lg border border-gray-700 hover:border-gray-600 transition shadow-sm">
-
+                                    <Card key={pista.id} nested>
                                         {/* CABECERA DE LA PISTA */}
                                         <div className="flex justify-between items-start mb-3">
-                                            <h3 className="font-bold text-white text-base leading-tight flex items-center gap-2">
-                                                <span className="text-blue-400">🎵</span> {pista.titulo}
+                                            <h3 className="font-bold text-base leading-tight flex items-center gap-2" style={{ color: "var(--ba-text)" }}>
+                                                <i className="ti ti-music" aria-hidden="true" style={{ color: "var(--ba-brand)" }} /> {pista.titulo}
                                             </h3>
-
-                                            <button
+                                            <IconButton
+                                                icon="trash"
+                                                label="Eliminar pista permanentemente"
+                                                danger
                                                 onClick={() => handleEliminarPista(pista.id)}
-                                                title="Eliminar pista permanentemente"
-                                                className="text-gray-500 hover:text-red-500 hover:bg-gray-800 transition p-1.5 rounded-md"
-                                            >
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
+                                            />
                                         </div>
 
-                                        {/* Reproductor de audio con fix de URL absoluta y carga de metadatos */}
-                                        <audio
-                                            src={audioSrc}
-                                            controls
-                                            className="w-full h-10 outline-none"
-                                            preload="metadata"
-                                        />
-                                    </div>
+                                        {/* Reproductor con forma de onda (fix de URL absoluta ya aplicado en audioSrc) */}
+                                        <WaveformPlayer src={audioSrc} />
+                                    </Card>
                                 );
                             })}
                         </div>
                     )}
-                </div>
+                </Card>
             </div>
 
             {/* --- MODAL DE SUBIDA Y GRABACIÓN --- */}
-            {mostrarModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-                    <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700 shadow-2xl">
-                        <h3 className="text-2xl font-bold mb-4 text-white">Nueva Pista</h3>
-
-                        <div className="flex mb-6 bg-gray-900 rounded p-1">
-                            <button onClick={() => setModo("archivo")} className={`flex-1 py-2 text-sm font-semibold rounded transition ${modo === "archivo" ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-white"}`}>
-                                Subir Archivo
-                            </button>
-                            <button onClick={() => setModo("grabar")} className={`flex-1 py-2 text-sm font-semibold rounded transition ${modo === "grabar" ? "bg-gray-700 text-white shadow" : "text-gray-400 hover:text-white"}`}>
-                                Grabar Voz
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubirCancion} className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium mb-1.5 text-gray-300">Título de la Pista</label>
-                                <input type="text" value={tituloCancion} onChange={(e) => setTituloCancion(e.target.value)} className="w-full p-3 rounded-lg bg-gray-900 border border-gray-600 text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Ej: Idea Vocal Estribillo" required />
-                            </div>
-
-                            {modo === "archivo" ? (
-                                <div>
-                                    <label className="block text-sm font-medium mb-1.5 text-gray-300">Archivo de Audio</label>
-                                    <input type="file" accept="audio/*" onChange={(e) => setArchivoAudio(e.target.files ? e.target.files[0] : null)} className="w-full text-sm text-gray-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
-                                </div>
-                            ) : (
-                                <div className="border border-gray-700 rounded-lg p-6 bg-gray-900 flex flex-col items-center justify-center min-h-40">
-                                    {!audioURL && !grabando && (
-                                        <button type="button" onClick={iniciarGrabacion} className="w-16 h-16 bg-red-600 hover:bg-red-500 rounded-full flex items-center justify-center text-white shadow-[0_0_15px_rgba(220,38,38,0.5)] transition transform hover:scale-105">
-                                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8h-2a5 5 0 01-10 0H3a7.001 7.001 0 006 6.93V17H6v2h8v-2h-3v-2z" clipRule="evenodd"></path></svg>
-                                        </button>
-                                    )}
-
-                                    {grabando && (
-                                        <div className="flex flex-col items-center">
-                                            <span className="text-red-500 animate-pulse font-bold mb-4 tracking-widest">REC... GRABANDO</span>
-                                            <button type="button" onClick={detenerGrabacion} className="w-16 h-16 bg-gray-800 hover:bg-gray-700 rounded-full flex items-center justify-center text-white border-4 border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.7)] transition transform hover:scale-105">
-                                                <div className="w-5 h-5 bg-red-600 rounded-sm"></div>
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {audioURL && !grabando && (
-                                        <div className="w-full flex flex-col items-center">
-                                            <p className="text-emerald-400 text-sm font-bold mb-3 flex items-center gap-1">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
-                                                ¡Toma capturada!
-                                            </p>
-                                            <audio src={audioURL} controls className="w-full mb-4 h-10 outline-none" />
-                                            <button type="button" onClick={descartarGrabacion} className="text-red-400 text-sm hover:text-red-300 hover:underline font-medium">
-                                                Descartar y volver a grabar
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {mensajeSubida && (
-                                <div className={`text-sm p-3 rounded-lg text-center font-medium ${mensajeSubida.includes("éxito") ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" : "bg-blue-500/20 text-blue-400 border border-blue-500/30"}`}>
-                                    {mensajeSubida}
-                                </div>
-                            )}
-
-                            <div className="flex justify-end space-x-3 pt-4 border-t border-gray-700">
-                                <button type="button" onClick={() => setMostrarModal(false)} className="px-5 py-2.5 text-gray-400 hover:text-white transition font-medium" disabled={subiendo}>
-                                    Cancelar
-                                </button>
-                                <button type="submit" disabled={subiendo || (modo === 'grabar' && !audioBlob) || (modo === 'archivo' && !archivoAudio)} className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 font-bold rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                                    {subiendo ? "Guardando..." : "Guardar en Banda"}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+            <Modal open={mostrarModal} onClose={() => setMostrarModal(false)} title="Nueva pista">
+                <div className="flex mb-6 p-1 rounded-lg" style={{ background: "var(--ba-bg)" }}>
+                    <button
+                        onClick={() => setModo("archivo")}
+                        className="flex-1 py-2 text-sm font-semibold rounded-md transition"
+                        style={modo === "archivo"
+                            ? { background: "var(--ba-surface-2)", color: "var(--ba-text)" }
+                            : { color: "var(--ba-text-muted)" }}
+                    >
+                        Subir archivo
+                    </button>
+                    <button
+                        onClick={() => setModo("grabar")}
+                        className="flex-1 py-2 text-sm font-semibold rounded-md transition"
+                        style={modo === "grabar"
+                            ? { background: "var(--ba-surface-2)", color: "var(--ba-text)" }
+                            : { color: "var(--ba-text-muted)" }}
+                    >
+                        Grabar voz
+                    </button>
                 </div>
-            )}
+
+                <form onSubmit={handleSubirCancion} className="space-y-6">
+                    <Field label="Título de la pista">
+                        <Input
+                            type="text" value={tituloCancion} onChange={(e) => setTituloCancion(e.target.value)}
+                            placeholder="Ej: Idea Vocal Estribillo" required
+                        />
+                    </Field>
+
+                    {modo === "archivo" ? (
+                        <Field label="Archivo de audio">
+                            <input
+                                type="file" accept="audio/*"
+                                onChange={(e) => setArchivoAudio(e.target.files ? e.target.files[0] : null)}
+                                className="w-full text-sm cursor-pointer file:mr-4 file:py-2.5 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:cursor-pointer"
+                                style={{ color: "var(--ba-text-muted)" }}
+                            />
+                        </Field>
+                    ) : (
+                        <div
+                            className="rounded-lg p-6 flex flex-col items-center justify-center min-h-40"
+                            style={{ background: "var(--ba-bg)", border: "1px solid var(--ba-border)" }}
+                        >
+                            {!audioURL && !grabando && (
+                                <button
+                                    type="button" onClick={iniciarGrabacion}
+                                    className="w-16 h-16 rounded-full flex items-center justify-center transition transform hover:scale-105"
+                                    style={{ background: "var(--ba-danger)", color: "var(--ba-on-brand)" }}
+                                >
+                                    <i className="ti ti-microphone" aria-hidden="true" style={{ fontSize: 28 }} />
+                                </button>
+                            )}
+
+                            {grabando && (
+                                <div className="flex flex-col items-center">
+                                    <span className="animate-pulse font-bold mb-4 tracking-widest" style={{ color: "var(--ba-danger)" }}>
+                                        REC... GRABANDO
+                                    </span>
+                                    <button
+                                        type="button" onClick={detenerGrabacion}
+                                        className="w-16 h-16 rounded-full flex items-center justify-center transition transform hover:scale-105"
+                                        style={{ background: "var(--ba-surface-2)", border: "4px solid var(--ba-danger)" }}
+                                    >
+                                        <div className="w-5 h-5 rounded-sm" style={{ background: "var(--ba-danger)" }}></div>
+                                    </button>
+                                </div>
+                            )}
+
+                            {audioURL && !grabando && (
+                                <div className="w-full flex flex-col items-center">
+                                    <p className="text-sm font-bold mb-3 flex items-center gap-1" style={{ color: "var(--ba-success)" }}>
+                                        <i className="ti ti-check" aria-hidden="true" /> ¡Toma capturada!
+                                    </p>
+                                    <div className="w-full mb-4">
+                                        <WaveformPlayer src={audioURL} />
+                                    </div>
+                                    <Button type="button" variant="ghost" size="sm" onClick={descartarGrabacion}>
+                                        Descartar y volver a grabar
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {mensajeSubida && (
+                        <div
+                            className="text-sm p-3 rounded-lg text-center font-medium"
+                            style={mensajeSubida.includes("éxito")
+                                ? { background: "var(--ba-success-soft)", color: "var(--ba-success)" }
+                                : { background: "var(--ba-brand-soft)", color: "var(--ba-brand)" }}
+                        >
+                            {mensajeSubida}
+                        </div>
+                    )}
+
+                    <div className="flex justify-end gap-3 pt-4" style={{ borderTop: "1px solid var(--ba-border)" }}>
+                        <Button type="button" variant="ghost" onClick={() => setMostrarModal(false)} disabled={subiendo}>
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit" variant="primary"
+                            disabled={subiendo || (modo === 'grabar' && !audioBlob) || (modo === 'archivo' && !archivoAudio)}
+                        >
+                            {subiendo ? "Guardando..." : "Guardar en banda"}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }
