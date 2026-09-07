@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { BandaProvider, useBanda } from "@/context/BandaContext";
 import SelectorBanda from "@/components/SelectorBanda";
+import { Badge } from "@/components/ui/ui";
 
 // --- INTERFAZ PARA EL SETLIST ---
 interface CancionSetlist {
@@ -12,6 +13,14 @@ interface CancionSetlist {
     titulo: string;
     artista: string;
 }
+
+const NAV_ITEMS = [
+    { href: "/", label: "Inicio", icon: "home" },
+    { href: "/bandas", label: "Mis bandas", icon: "users" },
+    { href: "/catalogo", label: "Catálogo", icon: "music" },
+    { href: "/ensayos", label: "Ensayos", icon: "calendar-event" },
+    { href: "/finanzas", label: "Finanzas", icon: "file-invoice" },
+];
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const router = useRouter();
@@ -116,10 +125,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             >
                 <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-minimalista">
                     <div
-                        className="h-16 flex items-center justify-center sticky top-0 z-10"
+                        className="h-16 flex items-center gap-2.5 px-5 sticky top-0 z-10"
                         style={{ borderBottom: "1px solid var(--ba-border)", background: "var(--ba-sidebar)" }}
                     >
-                        <h1 className="text-xl font-bold tracking-wide" style={{ color: "var(--ba-brand)" }}>BandAdmin</h1>
+                        <i className="ti ti-shield-check" aria-hidden="true" style={{ color: "var(--ba-brand)", fontSize: 22 }} />
+                        <h1 className="text-lg font-bold tracking-wide" style={{ color: "var(--ba-text)" }}>BandAdmin</h1>
                         <button
                             onClick={() => setSidebarAbierto(false)}
                             aria-label="Cerrar menú"
@@ -131,58 +141,47 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     </div>
 
                     <nav className="p-4 space-y-1.5">
-                        <Link href="/" className="block py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium hover:bg-[var(--ba-surface-2)]">
-                            Inicio
-                        </Link>
-                        <Link href="/bandas" className="block py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium hover:bg-[var(--ba-surface-2)]">
-                            Mis Bandas
-                        </Link>
-                        <Link href="/catalogo" className="block py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium hover:bg-[var(--ba-surface-2)]">
-                            Catálogo Musical
-                        </Link>
-                        <Link href="/ensayos" className="block py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium hover:bg-[var(--ba-surface-2)]">
-                            Calendario de Ensayos
-                        </Link>
-                        <Link href="/finanzas" className="block py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium hover:bg-[var(--ba-surface-2)]" style={{ color: "var(--ba-success)" }}>
-                            Finanzas
-                        </Link>
+                        {NAV_ITEMS.map((item) => {
+                            const activo = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`flex items-center gap-3 py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium ${activo ? "" : "hover:bg-[var(--ba-surface-2)]"
+                                        }`}
+                                    style={activo
+                                        ? { background: "var(--ba-brand-soft)", color: "var(--ba-brand)" }
+                                        : { color: "var(--ba-text-muted)" }}
+                                >
+                                    <i className={`ti ti-${item.icon}`} aria-hidden="true" />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
                     </nav>
 
                     {/* --- NUEVA SECCIÓN: SETLIST DE LA SEMANA --- */}
                     {bandaActiva && (
                         <div className="mt-8 px-5 pb-6">
                             <h3
-                                className="text-[11px] uppercase font-extrabold tracking-widest mb-4 pb-2 flex items-center justify-between"
+                                className="text-[11px] uppercase font-extrabold tracking-widest mb-4 pb-2"
                                 style={{ color: "var(--ba-text-subtle)", borderBottom: "1px solid var(--ba-border)" }}
                             >
                                 Setlist de la Semana
-                                <span
-                                    className="px-1.5 py-0.5 rounded text-[10px]"
-                                    style={{ background: "var(--ba-warning-soft)", color: "var(--ba-warning)" }}
-                                >
-                                    {setlist.length}
-                                </span>
                             </h3>
 
                             {setlist.length === 0 ? (
                                 <p className="text-xs italic px-1" style={{ color: "var(--ba-text-subtle)" }}>Sin canciones asignadas.</p>
                             ) : (
-                                <ul className="space-y-2.5">
+                                <ul className="space-y-3">
                                     {setlist.map(cancion => (
-                                        <li
-                                            key={cancion.id}
-                                            className="p-2.5 rounded-md shadow-sm flex items-start gap-2.5 transition"
-                                            style={{ background: "var(--ba-surface)", border: "1px solid var(--ba-border)" }}
-                                        >
-                                            <i className="ti ti-music text-sm mt-0.5" aria-hidden="true" style={{ color: "var(--ba-brand)" }} />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-xs font-semibold leading-tight truncate" style={{ color: "var(--ba-text)" }} title={cancion.titulo}>
-                                                    {cancion.titulo}
-                                                </p>
-                                                <p className="text-[10px] truncate" style={{ color: "var(--ba-text-subtle)" }} title={cancion.artista}>
-                                                    {cancion.artista || "Banda Original"}
-                                                </p>
-                                            </div>
+                                        <li key={cancion.id} className="min-w-0">
+                                            <p className="text-sm font-semibold leading-tight truncate" style={{ color: "var(--ba-text)" }} title={cancion.titulo}>
+                                                {cancion.titulo}
+                                            </p>
+                                            <p className="text-xs truncate" style={{ color: "var(--ba-text-subtle)" }} title={cancion.artista}>
+                                                {cancion.artista || "Banda Original"}
+                                            </p>
                                         </li>
                                     ))}
                                 </ul>
@@ -231,24 +230,16 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                         <SelectorBanda />
                     </div>
 
-                    <div className="flex items-center space-x-4 ml-4">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-sm font-semibold" style={{ color: "var(--ba-text)" }}>
-                                Bienvenido, {nombreUsuario}
-                            </p>
-                            <p
-                                className="text-xs transition-colors duration-200 font-medium"
-                                style={{ color: bandaActiva?.mi_rol === 'Líder' ? "var(--ba-warning)" : "var(--ba-brand)" }}
-                            >
-                                {bandaActiva?.mi_rol === 'Líder'
-                                    ? 'Rol: Líder'
-                                    : `Músico: ${instrumento}`
-                                }
-                            </p>
-                        </div>
+                    <div className="flex items-center gap-3 ml-4">
+                        {bandaActiva && (
+                            <Badge tone={bandaActiva.mi_rol === 'Líder' ? 'warning' : 'brand'} className="hidden sm:inline-flex">
+                                {bandaActiva.mi_rol === 'Líder' ? 'Líder' : instrumento}
+                            </Badge>
+                        )}
                         <div
                             className="w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-lg cursor-pointer transition shrink-0 text-sm"
                             style={{ background: "var(--ba-brand)", color: "var(--ba-on-brand)", border: "2px solid var(--ba-border)" }}
+                            title={nombreUsuario}
                         >
                             {nombreUsuario.charAt(0).toUpperCase()}
                         </div>

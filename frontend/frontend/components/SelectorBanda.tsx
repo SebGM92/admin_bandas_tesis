@@ -61,22 +61,30 @@ export default function SelectorBanda() {
     }
 
     return (
-        <div className="flex items-center gap-2">
-            <label htmlFor="selector-banda" className="text-sm hidden md:block" style={{ color: "var(--ba-text-muted)" }}>
-                Proyecto Activo:
+        <div
+            className="relative inline-flex items-center gap-2 h-10 pl-4 pr-8 rounded-full"
+            style={{ border: "1px solid var(--ba-border)", background: "var(--ba-surface-2)" }}
+        >
+            <label htmlFor="selector-banda" className="text-sm hidden sm:inline" style={{ color: "var(--ba-text-muted)" }}>
+                Proyecto
             </label>
             <select
                 id="selector-banda"
                 value={bandaActiva?.id || ""}
                 onChange={manejarCambio}
-                className="ba-select cursor-pointer shadow-sm"
-                style={{ width: "auto" }}
+                className="appearance-none bg-transparent border-none outline-none text-sm font-semibold cursor-pointer max-w-40 sm:max-w-none truncate"
+                style={{ color: "var(--ba-text)" }}
             >
                 <option value="" disabled>Selecciona una banda...</option>
                 {bandas.map(b => (
                     <option key={b.id} value={b.id}>{b.nombre}</option>
                 ))}
             </select>
+            <i
+                className="ti ti-chevron-down"
+                aria-hidden="true"
+                style={{ color: "var(--ba-text-muted)", position: "absolute", right: 12, fontSize: 14, pointerEvents: "none" }}
+            />
         </div>
     );
 }
