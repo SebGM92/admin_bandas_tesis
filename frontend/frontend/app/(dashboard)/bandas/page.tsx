@@ -135,7 +135,9 @@ export default function MisBandas() {
 
             if (res.ok) {
                 const data = await res.json();
-                const enlace = `${window.location.origin}/unirse/${data.token}`;
+                // El sistema leerá tu dominio real en producción automáticamente
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+                const enlace = `${baseUrl}/unirse/${data.token}`;
                 setEnlaceGenerado(enlace);
             } else {
                 alert("El backend aún no está listo para generar invitaciones.");
