@@ -147,7 +147,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`flex items-center gap-3 py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium ${activo ? "" : "hover:bg-[var(--ba-surface-2)]"
+                                    className={`flex items-center gap-3 py-2.5 px-4 rounded-lg transition duration-200 text-sm font-medium ${activo ? "" : "hover:bg-(--ba-surface-2)"
                                         }`}
                                     style={activo
                                         ? { background: "var(--ba-brand-soft)", color: "var(--ba-brand)" }
