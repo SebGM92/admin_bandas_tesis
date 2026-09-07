@@ -29,7 +29,7 @@ SECRET_KEY = os.environ.get(
 # CAMBIO CRÍTICO: DEBUG es False por defecto en producción, a menos que el .env diga lo contrario
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
-# Permitimos cualquier host en producción temporalmente para que Railway no bloquee la conexión
+
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
