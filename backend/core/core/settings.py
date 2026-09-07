@@ -30,7 +30,11 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
 
 # Permitimos cualquier host en producción temporalmente para que Railway no bloquee la conexión
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    'adminbandastesis-copy-production.up.railway.app'
+]
 
 
 # Application definition
@@ -136,6 +140,7 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 # --- CONFIGURACIÓN DE CORS ---
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
+    "http://admin-bandas-tesis.vercel.app"
 ]
 CORS_ALLOW_CREDENTIALS = True
 
