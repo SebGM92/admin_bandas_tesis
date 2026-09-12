@@ -5,8 +5,13 @@ import { useRouter } from "next/navigation";
 import { GoogleOAuthProvider, useGoogleLogin } from "@react-oauth/google";
 import { Card, Field, Input, Button } from "@/components/ui/ui";
 
-// 🔥 PEGA TU CLIENT ID AQUÍ (Solo el ID largo, no el secreto)
-const GOOGLE_CLIENT_ID = "548114914663-sgmf19g4ea99sm1nf7ekvhppvps8td86.apps.googleusercontent.com";
+// 1. 🔥 CAMBIO AQUÍ: Usamos la variable de entorno pública exigida por Next.js y Vercel
+// Dejamos tu ID anterior como "salvavidas" por si pruebas en local y olvidas tu archivo .env
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "548114914663-sgmf19g4ea99sm1nf7ekvhppvps8td86.apps.googleusercontent.com";
+
+// 2. 🔥 CAMBIO AQUÍ: Definimos la URL de tu backend de forma dinámica
+// En producción usará Railway, en tu PC usará localhost
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
 // Separé el formulario en un componente interno para poder usar los hooks de Google
 function ContenedorLogin() {
@@ -20,7 +25,7 @@ function ContenedorLogin() {
             setProcesando(true);
             try {
                 // Le enviamos el token de Google a nuestro Django
-                const res = await fetch("http://127.0.0.1:8000/api/v1/usuarios/google/", {
+                const res = await fetch(`${API_URL}/api/v1/usuarios/google/`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
