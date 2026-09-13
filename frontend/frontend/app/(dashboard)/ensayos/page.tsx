@@ -5,6 +5,9 @@ import { useBanda } from "@/context/BandaContext";
 import { Card, Field, Input, Textarea, Button, Badge, EmptyState, Modal } from "@/components/ui/ui";
 import { groupByDay, formatTimeRange } from "@/components/ui/format";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 interface Ensayo {
     id: number;
     fecha_hora_inicio: string;
@@ -31,7 +34,7 @@ export default function EnsayosPage() {
         const cargarEnsayos = async () => {
             const token = localStorage.getItem("access_token");
             try {
-                const res = await fetch(`http://127.0.0.1:8000/api/v1/ensayos/?banda=${bandaActiva.id}`, {
+                const res = await fetch(`${API_URL}/api/v1/ensayos/?banda=${bandaActiva.id}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -60,7 +63,7 @@ export default function EnsayosPage() {
         const token = localStorage.getItem("access_token");
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/v1/ensayos/", {
+            const res = await fetch(`${API_URL}/api/v1/ensayos/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
