@@ -140,10 +140,10 @@ AUTH_USER_MODEL = 'usuarios.Usuario'
 
 
 # --- CONFIGURACIÓN DE CORS ---
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://admin-bandas-tesis.vercel.app"
-]
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    'CORS_ALLOWED_ORIGINS',
+    'http://localhost:3000,http://admin-bandas-tesis.vercel.app'
+).split(',')
 CORS_ALLOW_CREDENTIALS = True
 
 
