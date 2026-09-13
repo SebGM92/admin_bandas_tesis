@@ -153,6 +153,11 @@ CSRF_TRUSTED_ORIGINS = ['https://admin-bandas-tesis.vercel.app']
 # 4. SOLUCIÓN AL ERROR COOP: Permite que el popup de Google se comunique con tu plataforma
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
+# --- FORZAR HTTPS DETRÁS DEL PROXY DE RAILWAY ---
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
 # --- CONFIGURACIÓN DE DJANGO REST FRAMEWORK ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
@@ -188,7 +193,8 @@ if not DEBUG:
         'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
         'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
         'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-        'RESOURCE_TYPE': 'auto'
+        'RESOURCE_TYPE': 'auto',
+        'SECURE': True
     }
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = '/media/'
