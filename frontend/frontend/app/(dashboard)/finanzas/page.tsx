@@ -5,6 +5,9 @@ import { useBanda } from "@/context/BandaContext";
 import { Card, Button, Field, Input, Badge, StatGrid, StatCard, EmptyState, Modal } from "@/components/ui/ui";
 import { formatCLP, formatDate } from "@/components/ui/format";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 // 1. Actualizamos la interfaz TypeScript
 interface Gasto {
     id: number;
@@ -31,7 +34,7 @@ export default function FinanzasPage() {
         const cargarGastos = async () => {
             const token = localStorage.getItem("access_token");
             try {
-                const res = await fetch(`http://127.0.0.1:8000/api/v1/gastos/?banda=${bandaActiva.id}`, {
+                const res = await fetch(`${API_URL}/api/v1/gastos/?banda=${bandaActiva.id}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -54,7 +57,7 @@ export default function FinanzasPage() {
         const token = localStorage.getItem("access_token");
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/v1/gastos/", {
+            const res = await fetch(`${API_URL}/api/v1/gastos/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
