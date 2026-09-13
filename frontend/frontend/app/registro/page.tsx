@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { Card, Field, Input, Button, StatusIcon } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function RegistroUsuario() {
     // Estados del formulario
     const [username, setUsername] = useState("");
@@ -24,7 +27,7 @@ export default function RegistroUsuario() {
 
         try {
             // Asegúrate de que esta URL coincida con tu configuración de urls.py en Django
-            const res = await fetch("http://127.0.0.1:8000/api/v1/usuarios/registro/", {
+            const res = await fetch(`${API_URL}/api/v1/usuarios/registro/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
