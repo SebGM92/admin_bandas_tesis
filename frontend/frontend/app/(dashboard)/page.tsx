@@ -6,6 +6,9 @@ import Link from "next/link";
 import { Card, Button, Badge, StatGrid, StatCard, EmptyState } from "@/components/ui/ui";
 import { groupByDay, formatTime, formatTimeRange, formatCLP, relativeDays } from "@/components/ui/format";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 interface Ensayo {
   id: number;
   fecha_hora_inicio: string;
@@ -41,7 +44,7 @@ export default function DashboardPage() {
       setCargando(true);
       const token = localStorage.getItem("access_token");
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/ensayos/?banda=${bandaActiva.id}`, {
+        const res = await fetch(`${API_URL}/api/v1/ensayos/?banda=${bandaActiva.id}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
@@ -75,7 +78,7 @@ export default function DashboardPage() {
     const cargarCanciones = async () => {
       const token = localStorage.getItem("access_token");
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/canciones/?banda=${bandaActiva.id}`, {
+        const res = await fetch(`${API_URL}/api/v1/canciones/?banda=${bandaActiva.id}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) setCanciones(await res.json());
@@ -94,7 +97,7 @@ export default function DashboardPage() {
     const cargarGastos = async () => {
       const token = localStorage.getItem("access_token");
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/gastos/?banda=${bandaActiva.id}`, {
+        const res = await fetch(`${API_URL}/api/v1/gastos/?banda=${bandaActiva.id}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) setGastos(await res.json());
@@ -113,7 +116,7 @@ export default function DashboardPage() {
     const cargarMiembros = async () => {
       const token = localStorage.getItem("access_token");
       try {
-        const res = await fetch(`http://127.0.0.1:8000/api/v1/membresias/?banda=${bandaActiva.id}`, {
+        const res = await fetch(`${API_URL}/api/v1/membresias/?banda=${bandaActiva.id}`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) setMiembros(await res.json());
