@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import { useBanda } from "@/context/BandaContext";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 interface Banda {
     id: number;
     nombre: string;
@@ -19,7 +22,7 @@ export default function SelectorBanda() {
             if (!token) return;
 
             try {
-                const res = await fetch("http://127.0.0.1:8000/api/v1/bandas/", {
+                const res = await fetch(`${API_URL}/api/v1/bandas/`, {
                     headers: { "Authorization": `Bearer ${token}` },
                 });
 
