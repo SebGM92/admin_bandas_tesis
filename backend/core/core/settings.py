@@ -139,13 +139,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'usuarios.Usuario'
 
 
-# --- CONFIGURACIÓN DE CORS ---
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    'CORS_ALLOWED_ORIGINS',
-    'http://localhost:3000,http://admin-bandas-tesis.vercel.app'
-).split(',')
+# --- CONFIGURACIÓN DE CORS Y SEGURIDAD CROSS-ORIGIN ---
+
+# 1. Permite el tráfico desde cualquier origen para evitar bloqueos por variables mal parseadas
+CORS_ALLOW_ALL_ORIGINS = True
+
+# 2. Permite el envío de cookies/tokens entre Vercel y Railway
 CORS_ALLOW_CREDENTIALS = True
 
+# 3. Autoriza a Vercel para hacer peticiones POST protegidas (CSRF)
+CSRF_TRUSTED_ORIGINS = ['https://admin-bandas-tesis.vercel.app']
+
+# 4. SOLUCIÓN AL ERROR COOP: Permite que el popup de Google se comunique con tu plataforma
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
 
 # --- CONFIGURACIÓN DE DJANGO REST FRAMEWORK ---
 REST_FRAMEWORK = {
