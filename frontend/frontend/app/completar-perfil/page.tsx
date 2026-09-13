@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, Field, Input, Select, Button } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function CompletarPerfil() {
     const router = useRouter();
     const [username, setUsername] = useState("");
@@ -16,7 +19,7 @@ export default function CompletarPerfil() {
         const token = localStorage.getItem("access_token");
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/v1/usuarios/perfil/", {
+            const res = await fetch(`${API_URL}/api/v1/usuarios/perfil/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
