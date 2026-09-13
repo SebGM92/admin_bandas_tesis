@@ -5,6 +5,9 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Card, Button, StatusIcon } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function UnirseBanda() {
     const params = useParams();
     const router = useRouter();
@@ -27,7 +30,7 @@ export default function UnirseBanda() {
 
             // 2. Enviamos el token al backend para validarlo
             try {
-                const res = await fetch(`http://127.0.0.1:8000/api/v1/invitaciones/aceptar/${tokenInvitacion}/`, {
+                const res = await fetch(`${API_URL}/api/v1/invitaciones/aceptar/${tokenInvitacion}/`, {
                     method: "POST",
                     headers: {
                         "Authorization": `Bearer ${accessToken}`,
