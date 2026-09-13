@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useBanda } from "@/context/BandaContext";
 import { Card, Field, Input, Button, Badge, EmptyState, Modal } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 type EstadoCancion = 'Por tocar' | 'En Aprendizaje' | 'Repertorio Activo';
 
 interface Cancion {
@@ -41,7 +45,7 @@ export default function CatalogoPage() {
             const token = localStorage.getItem("access_token");
             try {
                 // Al no enviar &maquetas=true, el backend nos traerá el catálogo oficial
-                const res = await fetch(`http://127.0.0.1:8000/api/v1/canciones/?banda=${bandaActiva.id}`, {
+                const res = await fetch(`${API_URL}/api/v1/canciones/?banda=${bandaActiva.id}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -65,7 +69,7 @@ export default function CatalogoPage() {
 
         const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch(`http://127.0.0.1:8000/api/v1/canciones/${id}/`, {
+            const res = await fetch(`${API_URL}/api/v1/canciones/${id}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -87,7 +91,7 @@ export default function CatalogoPage() {
 
         const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch(`http://127.0.0.1:8000/api/v1/canciones/${id}/`, {
+            const res = await fetch(`${API_URL}/api/v1/canciones/${id}/`, {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -109,7 +113,7 @@ export default function CatalogoPage() {
 
         const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch(`http://127.0.0.1:8000/api/v1/canciones/${id}/`, {
+            const res = await fetch(`${API_URL}/api/v1/canciones/${id}/`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -175,7 +179,7 @@ export default function CatalogoPage() {
         }
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/v1/canciones/", {
+            const res = await fetch(`${API_URL}/api/v1/canciones/`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`
