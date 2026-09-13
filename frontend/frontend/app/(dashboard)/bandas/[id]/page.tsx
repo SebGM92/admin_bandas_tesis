@@ -6,6 +6,9 @@ import Link from "next/link";
 import WaveSurfer from "wavesurfer.js";
 import { Card, Button, IconButton, Badge, Avatar, Modal, Field, Input, EmptyState } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente una sola vez
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 interface BandaDetalle {
     id: number;
     nombre: string;
