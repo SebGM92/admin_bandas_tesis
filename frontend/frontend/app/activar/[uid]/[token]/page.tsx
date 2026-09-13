@@ -5,6 +5,9 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { Card, Button, StatusIcon } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 export default function ActivacionCuenta() {
     const params = useParams();
     // Extraemos las variables de la URL (gracias a los nombres de las carpetas con corchetes)
@@ -20,7 +23,7 @@ export default function ActivacionCuenta() {
 
             try {
                 // Hacemos un GET al endpoint que acabamos de crear en Django
-                const res = await fetch(`http://127.0.0.1:8000/api/v1/usuarios/activar/${uid}/${token}/`);
+                const res = await fetch(`${API_URL}/api/v1/usuarios/activar/${uid}/${token}/`);
 
                 if (res.ok) {
                     setEstado("exito");
