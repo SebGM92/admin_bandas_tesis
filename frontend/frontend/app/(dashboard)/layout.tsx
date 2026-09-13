@@ -7,6 +7,9 @@ import { BandaProvider, useBanda } from "@/context/BandaContext";
 import SelectorBanda from "@/components/SelectorBanda";
 import { Badge } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 // --- INTERFAZ PARA EL SETLIST ---
 interface CancionSetlist {
     id: number;
@@ -48,7 +51,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             if (!token) return;
 
             try {
-                const res = await fetch("http://127.0.0.1:8000/api/v1/usuarios/me/", {
+                const res = await fetch(`${API_URL}/api/v1/usuarios/me/`, {
                     cache: "no-store",
                     headers: {
                         "Authorization": `Bearer ${token}`,
@@ -81,7 +84,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         const cargarSetlist = async () => {
             const token = localStorage.getItem("access_token");
             try {
-                const res = await fetch(`http://127.0.0.1:8000/api/v1/canciones/?banda=${bandaActiva.id}`, {
+                const res = await fetch(`${API_URL}/api/v1/canciones/?banda=${bandaActiva.id}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
