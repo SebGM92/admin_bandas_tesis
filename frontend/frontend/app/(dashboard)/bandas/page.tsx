@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, Field, Input, Button, IconButton, Modal, EmptyState } from "@/components/ui/ui";
 
+// 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
 interface Banda {
     id: number;
     nombre: string;
@@ -37,7 +40,7 @@ export default function MisBandas() {
             }
 
             try {
-                const res = await fetch("http://127.0.0.1:8000/api/v1/bandas/", {
+                const res = await fetch(`${API_URL}/api/v1/bandas/`, {
                     method: "GET",
                     headers: {
                         "Content-Type": "application/json",
@@ -68,7 +71,7 @@ export default function MisBandas() {
         const token = localStorage.getItem("access_token");
 
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/v1/bandas/", {
+            const res = await fetch(`${API_URL}/api/v1/bandas/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -101,7 +104,7 @@ export default function MisBandas() {
 
         const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch(`http://127.0.0.1:8000/api/v1/bandas/${idBanda}/`, {
+            const res = await fetch(`${API_URL}/api/v1/bandas/${idBanda}/`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` },
             });
@@ -124,7 +127,7 @@ export default function MisBandas() {
 
         const token = localStorage.getItem("access_token");
         try {
-            const res = await fetch("http://127.0.0.1:8000/api/v1/invitaciones/", {
+            const res = await fetch(`${API_URL}/api/v1/invitaciones/`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -135,9 +138,7 @@ export default function MisBandas() {
 
             if (res.ok) {
                 const data = await res.json();
-                // El sistema leerá tu dominio real en producción automáticamente
-                const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
-                const enlace = `${baseUrl}/unirse/${data.token}`;
+                const enlace = `${window.location.origin}/unirse/${data.token}`;
                 setEnlaceGenerado(enlace);
             } else {
                 alert("El backend aún no está listo para generar invitaciones.");
