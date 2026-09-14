@@ -193,12 +193,18 @@ if not DEBUG:
         'RESOURCE_TYPE': 'auto',
         'SECURE': True
     }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = '/media/'
 
-    # Whitenoise sirve los estáticos comprimidos y con hash de caché;
-    # requiere que `collectstatic` haya corrido (ver Procfile).
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    # 🔥 CAMBIO CRÍTICO: Nueva sintaxis para Django 4.2 y 5.0+
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        }
+    }
+
+    MEDIA_URL = '/media/'
 else:
     # DESARROLLO LOCAL: Guardamos en la carpeta de la PC
     MEDIA_URL = '/media/'
