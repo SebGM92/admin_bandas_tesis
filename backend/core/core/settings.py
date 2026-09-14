@@ -1,7 +1,6 @@
 """
 Django settings for core project.
 """
-
 from datetime import timedelta
 from pathlib import Path
 import os
@@ -51,6 +50,8 @@ INSTALLED_APPS = [
     # --- Librerías de terceros ---
     'rest_framework',
     'rest_framework_simplejwt',
+    'cloudinary_storage',
+    'cloudinary',
 
     # --- Aplicaciones de tu proyecto ---
     'usuarios',
@@ -185,10 +186,6 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
 # --- CONFIGURACIÓN DE ARCHIVOS MULTIMEDIA (MEDIA FILES) ---
 if not DEBUG:
     # PRODUCCIÓN: Usamos Cloudinary como almacenamiento remoto
-    INSTALLED_APPS += [
-        'cloudinary_storage',
-        'cloudinary',
-    ]
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
         'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
