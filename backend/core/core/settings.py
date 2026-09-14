@@ -197,7 +197,8 @@ if not DEBUG:
     # 🔥 CAMBIO CRÍTICO: Nueva sintaxis para Django 4.2 y 5.0+
     STORAGES = {
         "default": {
-            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"
+            # CAMBIAMOS 'Media' por 'RawMedia' PARA QUE ACEPTE AUDIOS .WEBM
+            "BACKEND": "cloudinary_storage.storage.RawMediaCloudinaryStorage"
         },
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
