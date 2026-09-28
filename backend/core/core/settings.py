@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     # --- Aplicaciones de tu proyecto ---
     'usuarios',
     'bandas',
+    'pagos',
 ]
 
 MIDDLEWARE = [
@@ -180,6 +181,19 @@ EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.environ.get('EMAIL_USER')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_PASSWORD')
+
+
+# --- CONFIGURACIÓN DEL FRONTEND (para links de retorno, invitaciones, etc.) ---
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+
+
+# --- CONFIGURACIÓN DE MERCADOPAGO (Plan Pro / Freemium) ---
+# Access token de PRUEBA (modo sandbox): se obtiene gratis en
+# https://www.mercadopago.cl/developers/panel/app sin necesitar cuenta
+# comercial verificada. Si queda vacío, el checkout responde 503 con un
+# mensaje claro en vez de fallar de forma confusa.
+MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN', '')
+MERCADOPAGO_PRECIO_PRO_CLP = int(os.environ.get('MERCADOPAGO_PRECIO_PRO_CLP', '4990'))
 
 
 # --- CONFIGURACIÓN DE ARCHIVOS MULTIMEDIA (MEDIA FILES) ---

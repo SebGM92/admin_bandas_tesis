@@ -9,6 +9,12 @@ from rest_framework.exceptions import PermissionDenied
 from .models import Banda, Gasto, Membresia, Ensayo, Invitacion, Cancion, Equipamiento, Pista, Toma, ComentarioAudio
 from .serializers import BandaSerializer, InvitacionSerializer, MembresiaSerializer, EnsayoSerializer, InvitacionSerializer, GastoSerializer, CancionSerializer, EquipamientoSerializer, PistaSerializer, TomaSerializer, ComentarioAudioSerializer
 from .pdf import generar_tech_rider_pdf
+from pagos.exceptions import LimiteFreemiumAlcanzado
+from pagos.utils import (
+    LIMITE_BANDAS_FREE, LIMITE_COMENTARIOS_POR_TOMA_FREE,
+    LIMITE_STEMS_POR_CANCION_FREE, LIMITE_TECH_RIDER_EXPORTS_FREE,
+    LIMITE_TOMAS_POR_PISTA_FREE, banda_es_pro, usuario_es_pro,
+)
 
 
 class BandaViewSet(viewsets.ModelViewSet):
@@ -25,6 +31,14 @@ class BandaViewSet(viewsets.ModelViewSet):
             membresias__usuario=self.request.user).distinct()
 
     def perform_create(self, serializer):
+        # Límite del plan Free: una cuenta gratuita solo puede pertenecer a 1 banda.
+        if not usuario_es_pro(self.request.user):
+            if Membresia.objects.filter(usuario=self.request.user).count() >= LIMITE_BANDAS_FREE:
+                raise LimiteFreemiumAlcanzado(
+                    f"El plan gratuito permite pertenecer a {LIMITE_BANDAS_FREE} banda. "
+                    "Actualiza a Pro para crear o unirte a más bandas."
+                )
+
         # 1. Guardamos la banda en la base de datos
         banda_creada = serializer.save()
 
@@ -47,8 +61,18 @@ class BandaViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 "No perteneces a esta banda, no puedes descargar su Tech Rider.")
 
+        # Límite del plan Free: solo N exportaciones de PDF por banda.
+        if not banda_es_pro(banda) and banda.tech_riders_exportados >= LIMITE_TECH_RIDER_EXPORTS_FREE:
+            raise LimiteFreemiumAlcanzado(
+                f"El plan gratuito permite exportar el Tech Rider {LIMITE_TECH_RIDER_EXPORTS_FREE} vez. "
+                "Actualiza a Pro para exportarlo sin límites."
+            )
+
         equipos = banda.equipamiento.all()
         buffer = generar_tech_rider_pdf(banda, equipos)
+
+        banda.tech_riders_exportados += 1
+        banda.save(update_fields=['tech_riders_exportados'])
 
         nombre_archivo = f"tech-rider-{slugify(banda.nombre) or 'banda'}.pdf"
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
@@ -159,6 +183,14 @@ class InvitacionViewSet(viewsets.ModelViewSet):
         # Evitar duplicados: verificar si el usuario ya está en la banda
         if Membresia.objects.filter(usuario=request.user, banda=invitacion.banda).exists():
             return Response({'error': 'Ya eres miembro de esta banda.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Límite del plan Free: no dejamos "saltarse" el límite de 1 banda uniéndose por invitación
+        if not usuario_es_pro(request.user):
+            if Membresia.objects.filter(usuario=request.user).count() >= LIMITE_BANDAS_FREE:
+                return Response({
+                    'error': f'El plan gratuito permite pertenecer a {LIMITE_BANDAS_FREE} banda. '
+                             'Actualiza a Pro para unirte a más bandas.'
+                }, status=status.HTTP_402_PAYMENT_REQUIRED)
 
         # Magia: Crear la membresía para el nuevo usuario
         Membresia.objects.create(
@@ -272,6 +304,14 @@ class PistaViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 "No puedes crear pistas en una canción de una banda a la que no perteneces.")
 
+        # Límite del plan Free: N stems por canción
+        if not banda_es_pro(cancion.banda):
+            if Pista.objects.filter(cancion=cancion).count() >= LIMITE_STEMS_POR_CANCION_FREE:
+                raise LimiteFreemiumAlcanzado(
+                    f"El plan gratuito permite hasta {LIMITE_STEMS_POR_CANCION_FREE} stems por canción. "
+                    "Actualiza a Pro para stems ilimitados."
+                )
+
         serializer.save(creado_por=self.request.user)
 
 
@@ -299,6 +339,15 @@ class TomaViewSet(viewsets.ModelViewSet):
             raise PermissionDenied(
                 "No puedes subir tomas a una pista de una banda a la que no perteneces.")
 
+        # Límite del plan Free: N tomas por stem (versiones sobre la misma idea)
+        banda = pista.cancion.banda
+        if not banda_es_pro(banda):
+            if Toma.objects.filter(pista=pista).count() >= LIMITE_TOMAS_POR_PISTA_FREE:
+                raise LimiteFreemiumAlcanzado(
+                    f"El plan gratuito permite {LIMITE_TOMAS_POR_PISTA_FREE} toma por stem. "
+                    "Actualiza a Pro para grabar múltiples versiones."
+                )
+
         serializer.save(usuario=self.request.user)
 
 
@@ -325,6 +374,15 @@ class ComentarioAudioViewSet(viewsets.ModelViewSet):
         if not toma.pista.cancion.banda.membresias.filter(usuario=self.request.user).exists():
             raise PermissionDenied(
                 "No puedes comentar en una toma de una banda a la que no perteneces.")
+
+        # Límite del plan Free: N comentarios por toma
+        banda = toma.pista.cancion.banda
+        if not banda_es_pro(banda):
+            if ComentarioAudio.objects.filter(toma=toma).count() >= LIMITE_COMENTARIOS_POR_TOMA_FREE:
+                raise LimiteFreemiumAlcanzado(
+                    f"El plan gratuito permite hasta {LIMITE_COMENTARIOS_POR_TOMA_FREE} comentarios por toma. "
+                    "Actualiza a Pro para comentarios ilimitados."
+                )
 
         serializer.save(usuario=self.request.user)
 

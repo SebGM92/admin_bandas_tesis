@@ -28,6 +28,13 @@ class Banda(models.Model):
         related_name='bandas'
     )
 
+    # --- MÓDULO FREEMIUM: contador para el límite del plan gratuito ---
+    tech_riders_exportados = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Tech Riders exportados',
+        help_text="Cuántas veces se descargó el PDF del Tech Rider (limitado en el plan Free)."
+    )
+
     def __str__(self):
         return self.nombre
 

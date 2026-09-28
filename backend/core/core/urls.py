@@ -30,6 +30,7 @@ urlpatterns = [
     # Conectamos las rutas de nuestra app bandas bajo el prefijo /api/v1/
     path('api/v1/usuarios/', include('usuarios.urls')),
     path('api/v1/', include('bandas.urls')),
+    path('api/v1/pagos/', include('pagos.urls')),
 ]
 
 # ESTO ES LO QUE SOLUCIONA EL ERROR 404 EN DESARROLLO
