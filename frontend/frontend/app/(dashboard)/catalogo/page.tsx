@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useBanda } from "@/context/BandaContext";
 import { Card, Field, Input, Button, Badge, EmptyState, Modal } from "@/components/ui/ui";
 
@@ -298,6 +299,7 @@ export default function CatalogoPage() {
                                     <TarjetaCancion
                                         key={cancion.id}
                                         cancion={cancion}
+                                        bandaId={bandaActiva.id}
                                         onDragStart={handleOnDragStart}
                                         onDragEnd={handleOnDragEnd}
                                         onToggleSetlist={toggleSetlist}
@@ -316,13 +318,14 @@ export default function CatalogoPage() {
 // --- SUB-COMPONENTE: TARJETA DE CANCIÓN ---
 interface TarjetaCancionProps {
     cancion: Cancion;
+    bandaId: number;
     onDragStart: (e: React.DragEvent, id: number) => void;
     onDragEnd: (e: React.DragEvent) => void;
     onToggleSetlist: (id: number, valorActual: boolean) => void;
     onEliminar: (id: number) => void;
 }
 
-function TarjetaCancion({ cancion, onDragStart, onDragEnd, onToggleSetlist, onEliminar }: TarjetaCancionProps) {
+function TarjetaCancion({ cancion, bandaId, onDragStart, onDragEnd, onToggleSetlist, onEliminar }: TarjetaCancionProps) {
     const enSetlist = cancion.en_setlist || false;
 
     return (
@@ -343,6 +346,17 @@ function TarjetaCancion({ cancion, onDragStart, onDragEnd, onToggleSetlist, onEl
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+
+                {/* BOTÓN ESTUDIO MULTITRACK: stems, tomas y comentarios con timestamp */}
+                <Link
+                    href={`/bandas/${bandaId}/canciones/${cancion.id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    title="Abrir estudio multitrack"
+                    className="ba-icon-btn"
+                    style={{ color: "var(--ba-brand)" }}
+                >
+                    <i className="ti ti-waveform" aria-hidden="true" />
+                </Link>
 
                 {/* BOTÓN ESTRELLA: SETLIST DE LA SEMANA */}
                 <button
