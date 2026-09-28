@@ -23,6 +23,20 @@ interface Pista {
     archivo_audio: string; // La URL que nos devolverá Django
 }
 
+// --- INTERFAZ PARA EL EQUIPAMIENTO / TECH RIDER ---
+interface Equipo {
+    id: number;
+    nombre: string;
+    tipo: string;
+    tipo_display: string;
+    marca_modelo: string;
+    cantidad: number;
+    propio: boolean;
+    requiere_corriente: boolean;
+    requiere_phantom_power: boolean;
+    notas_tecnicas: string;
+}
+
 // WaveSurfer dibuja directo en <canvas>, así que no puede resolver var(--ba-*):
 // leemos el valor ya calculado del token en tiempo de montaje.
 function tokenColor(nombre: string) {
@@ -109,16 +123,33 @@ export default function PerfilBanda() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<BlobPart[]>([]);
 
+    // --- ESTADOS PARA EL INVENTARIO / TECH RIDER ---
+    const [inventario, setInventario] = useState<Equipo[]>([]);
+    const [mostrarModalEquipo, setMostrarModalEquipo] = useState(false);
+    const [subiendoEquipo, setSubiendoEquipo] = useState(false);
+    const [generandoPDF, setGenerandoPDF] = useState(false);
+    const [formEquipo, setFormEquipo] = useState({
+        nombre: "",
+        tipo: "INSTRUMENTO",
+        marca_modelo: "",
+        cantidad: 1,
+        propio: true,
+        requiere_corriente: false,
+        requiere_phantom_power: false,
+        notas_tecnicas: ""
+    });
+
     // 1. Cargar detalles de la banda
     useEffect(() => {
         const cargarDetalleBanda = async () => {
             const token = localStorage.getItem("access_token");
-            if (!token) return;
-
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+            if (!token || !id || id === 'undefined') {
+                setCargando(false);
+                return;
+            }
 
             try {
-                const res = await fetch(`${baseUrl}/api/v1/bandas/${id}/`, {
+                const res = await fetch(`${API_URL}/api/v1/bandas/${id}/`, {
                     method: "GET",
                     headers: { "Authorization": `Bearer ${token}` },
                 });
@@ -138,10 +169,8 @@ export default function PerfilBanda() {
             const token = localStorage.getItem("access_token");
             if (!token || !id) return;
 
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
             try {
-                const res = await fetch(`${baseUrl}/api/v1/membresias/?banda=${id}`, {
+                const res = await fetch(`${API_URL}/api/v1/membresias/?banda=${id}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -161,11 +190,9 @@ export default function PerfilBanda() {
             const token = localStorage.getItem("access_token");
             if (!token || !id) return;
 
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
             try {
                 // AÑADIMOS EL PARÁMETRO: &maquetas=true al final de la URL
-                const res = await fetch(`${baseUrl}/api/v1/canciones/?banda=${id}&maquetas=true`, {
+                const res = await fetch(`${API_URL}/api/v1/canciones/?banda=${id}&maquetas=true`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
@@ -177,6 +204,24 @@ export default function PerfilBanda() {
             }
         };
         cargarPistas();
+    }, [id]);
+
+    // 4. Cargar el Inventario / Tech Rider
+    useEffect(() => {
+        const cargarInventario = async () => {
+            const token = localStorage.getItem("access_token");
+            if (!token || !id) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/v1/equipamiento/?banda=${id}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) setInventario(await res.json());
+            } catch (error) {
+                console.error("Error al cargar inventario:", error);
+            }
+        };
+        cargarInventario();
     }, [id]);
 
     // --- LÓGICA DE GRABACIÓN ---
@@ -245,10 +290,8 @@ export default function PerfilBanda() {
         formData.append("archivo_audio", archivoParaSubir);
         formData.append("banda", id as string);
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
         try {
-            const res = await fetch(`${baseUrl}/api/v1/canciones/`, {
+            const res = await fetch(`${API_URL}/api/v1/canciones/`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
                 body: formData,
@@ -281,10 +324,9 @@ export default function PerfilBanda() {
         if (!window.confirm("¿Estás seguro de que deseas eliminar esta pista? Esta acción no se puede deshacer.")) return;
 
         const token = localStorage.getItem("access_token");
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
         try {
-            const res = await fetch(`${baseUrl}/api/v1/canciones/${pistaId}/`, {
+            const res = await fetch(`${API_URL}/api/v1/canciones/${pistaId}/`, {
                 method: "DELETE",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -299,11 +341,92 @@ export default function PerfilBanda() {
         }
     };
 
+    // --- LÓGICA PARA GUARDAR EQUIPAMIENTO ---
+    const handleGuardarEquipo = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubiendoEquipo(true);
+        const token = localStorage.getItem("access_token");
+
+        try {
+            const res = await fetch(`${API_URL}/api/v1/equipamiento/`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ ...formEquipo, banda: id }),
+            });
+
+            if (res.ok) {
+                const nuevoEquipo = await res.json();
+                setInventario(prev => [...prev, nuevoEquipo]);
+                setMostrarModalEquipo(false);
+                setFormEquipo({ nombre: "", tipo: "INSTRUMENTO", marca_modelo: "", cantidad: 1, propio: true, requiere_corriente: false, requiere_phantom_power: false, notas_tecnicas: "" });
+            } else {
+                alert("Hubo un error al guardar el equipo.");
+            }
+        } catch (error) {
+            alert("Error de conexión.");
+        } finally {
+            setSubiendoEquipo(false);
+        }
+    };
+
+    // --- LÓGICA PARA ELIMINAR EQUIPAMIENTO ---
+    const handleEliminarEquipo = async (equipoId: number) => {
+        if (!window.confirm("¿Deseas quitar este ítem del inventario?")) return;
+        const token = localStorage.getItem("access_token");
+        try {
+            const res = await fetch(`${API_URL}/api/v1/equipamiento/${equipoId}/`, {
+                method: "DELETE", headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok || res.status === 204) {
+                setInventario(prev => prev.filter(e => e.id !== equipoId));
+            } else {
+                alert("Hubo un problema al intentar eliminar el equipo.");
+            }
+        } catch (error) {
+            alert("Error de red.");
+        }
+    };
+
+    // --- LÓGICA PARA EXPORTAR EL TECH RIDER EN PDF ---
+    const handleExportarPDF = async () => {
+        if (!id) return;
+        setGenerandoPDF(true);
+        const token = localStorage.getItem("access_token");
+
+        try {
+            const res = await fetch(`${API_URL}/api/v1/bandas/${id}/tech-rider-pdf/`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (!res.ok) {
+                alert("No se pudo generar el PDF del Tech Rider.");
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = window.URL.createObjectURL(blob);
+            const enlace = document.createElement("a");
+            enlace.href = url;
+            enlace.download = `tech-rider-${banda?.nombre || "banda"}.pdf`;
+            document.body.appendChild(enlace);
+            enlace.click();
+            enlace.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            alert("Error de conexión al generar el PDF.");
+        } finally {
+            setGenerandoPDF(false);
+        }
+    };
+
     if (cargando) return <p className="p-8" style={{ color: "var(--ba-text-muted)" }}>Cargando...</p>;
     if (!banda) return <p className="p-8" style={{ color: "var(--ba-text-muted)" }}>Banda no encontrada.</p>;
 
     return (
-        <div className="relative max-w-6xl mx-auto">
+        <div className="relative max-w-6xl mx-auto pb-12">
             <Link
                 href="/bandas"
                 className="mb-6 inline-flex items-center gap-1 text-sm transition"
@@ -317,7 +440,7 @@ export default function PerfilBanda() {
                 <p className="font-semibold" style={{ color: "var(--ba-brand)" }}>{banda.genero_musical || "Género no especificado"}</p>
             </Card>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
 
                 {/* --- SECCIÓN ALINEACIÓN --- */}
                 <Card className="h-fit">
@@ -375,12 +498,10 @@ export default function PerfilBanda() {
                             {pistas.map((pista) => {
                                 if (!pista.archivo_audio) return null;
 
-                                const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-
                                 // Verificación de URL absoluta limpia para evitar problemas de diagonales dobles o rotas
                                 const audioSrc = pista.archivo_audio.startsWith('http')
                                     ? pista.archivo_audio
-                                    : `${baseUrl}${pista.archivo_audio.startsWith('/') ? '' : '/'}${pista.archivo_audio}`;
+                                    : `${API_URL}${pista.archivo_audio.startsWith('/') ? '' : '/'}${pista.archivo_audio}`;
 
                                 return (
                                     <Card key={pista.id} nested>
@@ -406,6 +527,73 @@ export default function PerfilBanda() {
                     )}
                 </Card>
             </div>
+
+            {/* --- SECCIÓN INVENTARIO Y TECH RIDER --- */}
+            <Card>
+                <div className="flex justify-between items-center mb-6 pb-2" style={{ borderBottom: "1px solid var(--ba-border)" }}>
+                    <h2 className="ba-section-title flex items-center gap-2">
+                        <i className="ti ti-clipboard-list" aria-hidden="true" style={{ color: "var(--ba-brand)" }} /> Inventario y Tech Rider
+                    </h2>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" icon="file-download" onClick={handleExportarPDF} disabled={generandoPDF}>
+                            {generandoPDF ? "Generando..." : "Exportar PDF"}
+                        </Button>
+                        <Button variant="primary" size="sm" icon="plus" onClick={() => setMostrarModalEquipo(true)}>
+                            Añadir Equipo
+                        </Button>
+                    </div>
+                </div>
+
+                {inventario.length === 0 ? (
+                    <EmptyState
+                        icon="box"
+                        title="Inventario vacío"
+                        body="Registra las guitarras, amplificadores, micrófonos y cables para armar tu Tech Rider."
+                    />
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr style={{ borderBottom: "1px solid var(--ba-border)", color: "var(--ba-text-muted)" }}>
+                                    <th className="pb-3 font-semibold text-sm">Categoría</th>
+                                    <th className="pb-3 font-semibold text-sm">Equipo</th>
+                                    <th className="pb-3 font-semibold text-sm">Marca / Modelo</th>
+                                    <th className="pb-3 font-semibold text-sm text-center">Cant.</th>
+                                    <th className="pb-3 font-semibold text-sm text-center">Requisitos</th>
+                                    <th className="pb-3 font-semibold text-sm text-right">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {inventario.map((item) => (
+                                    <tr key={item.id} style={{ borderBottom: "1px solid var(--ba-border)" }} className="hover:bg-(--ba-surface-2) transition">
+                                        <td className="py-3 pr-4">
+                                            <Badge tone="neutral" className="text-xs">{item.tipo_display}</Badge>
+                                        </td>
+                                        <td className="py-3 pr-4 font-medium" style={{ color: "var(--ba-text)" }}>
+                                            {item.nombre}
+                                            {item.propio ?
+                                                <span className="ml-2 text-xs font-normal" style={{ color: "var(--ba-success)" }}>(Propio)</span> :
+                                                <span className="ml-2 text-xs font-normal" style={{ color: "var(--ba-danger)" }}>(Pedir al local)</span>
+                                            }
+                                        </td>
+                                        <td className="py-3 pr-4 text-sm" style={{ color: "var(--ba-text-muted)" }}>{item.marca_modelo || "-"}</td>
+                                        <td className="py-3 pr-4 text-center font-bold" style={{ color: "var(--ba-text)" }}>{item.cantidad}</td>
+                                        <td className="py-3 pr-4 text-center">
+                                            <div className="flex justify-center gap-2">
+                                                {item.requiere_corriente && <i className="ti ti-plug" title="Requiere 220v" style={{ color: "var(--ba-warning)" }} />}
+                                                {item.requiere_phantom_power && <i className="ti ti-bolt" title="Requiere Phantom Power +48v" style={{ color: "var(--ba-danger)" }} />}
+                                            </div>
+                                        </td>
+                                        <td className="py-3 text-right">
+                                            <IconButton icon="trash" label="Eliminar" danger onClick={() => handleEliminarEquipo(item.id)} />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </Card>
 
             {/* --- MODAL DE SUBIDA Y GRABACIÓN --- */}
             <Modal open={mostrarModal} onClose={() => setMostrarModal(false)} title="Nueva pista">
@@ -513,6 +701,80 @@ export default function PerfilBanda() {
                             disabled={subiendo || (modo === 'grabar' && !audioBlob) || (modo === 'archivo' && !archivoAudio)}
                         >
                             {subiendo ? "Guardando..." : "Guardar en banda"}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* --- MODAL: AGREGAR EQUIPAMIENTO --- */}
+            <Modal open={mostrarModalEquipo} onClose={() => setMostrarModalEquipo(false)} title="Registrar Equipamiento">
+                <form onSubmit={handleGuardarEquipo} className="space-y-4">
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Tipo de equipo">
+                            <select
+                                className="w-full rounded-md p-2 text-sm"
+                                style={{ background: "var(--ba-surface-2)", border: "1px solid var(--ba-border)", color: "var(--ba-text)" }}
+                                value={formEquipo.tipo}
+                                onChange={(e) => setFormEquipo({ ...formEquipo, tipo: e.target.value })}
+                            >
+                                <option value="INSTRUMENTO">Instrumento</option>
+                                <option value="MICROFONIA">Microfonía</option>
+                                <option value="MONITOREO">Monitoreo</option>
+                                <option value="BACKLINE">Backline / Amps</option>
+                                <option value="ACCESORIOS">Accesorios / Cables</option>
+                            </select>
+                        </Field>
+                        <Field label="Cantidad">
+                            <Input type="number" min="1" required value={formEquipo.cantidad} onChange={(e) => setFormEquipo({ ...formEquipo, cantidad: parseInt(e.target.value) })} />
+                        </Field>
+                    </div>
+
+                    <Field label="Nombre descriptivo">
+                        <Input
+                            type="text" required value={formEquipo.nombre}
+                            onChange={(e) => setFormEquipo({ ...formEquipo, nombre: e.target.value })}
+                            placeholder="Ej: Monitor Activo Wharfedale, Gibson Gold Top Les Paul P90..."
+                        />
+                    </Field>
+
+                    <Field label="Marca y Modelo (Opcional)">
+                        <Input
+                            type="text" value={formEquipo.marca_modelo}
+                            onChange={(e) => setFormEquipo({ ...formEquipo, marca_modelo: e.target.value })}
+                            placeholder="Ej: Shure SM58, Behringer DI20, Klotz XLR..."
+                        />
+                    </Field>
+
+                    <div className="p-4 rounded-lg space-y-3" style={{ background: "var(--ba-surface-2)", border: "1px solid var(--ba-border)" }}>
+                        <p className="text-sm font-semibold mb-2" style={{ color: "var(--ba-text)" }}>Requisitos Técnicos (Stage Plot)</p>
+
+                        <label className="flex items-center gap-2 cursor-pointer text-sm" style={{ color: "var(--ba-text-muted)" }}>
+                            <input type="checkbox" checked={formEquipo.propio} onChange={(e) => setFormEquipo({ ...formEquipo, propio: e.target.checked })} />
+                            Es equipo propio (La banda lo lleva)
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer text-sm" style={{ color: "var(--ba-text-muted)" }}>
+                            <input type="checkbox" checked={formEquipo.requiere_corriente} onChange={(e) => setFormEquipo({ ...formEquipo, requiere_corriente: e.target.checked })} />
+                            Necesita enchufe / corriente 220v en escenario
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer text-sm" style={{ color: "var(--ba-text-muted)" }}>
+                            <input type="checkbox" checked={formEquipo.requiere_phantom_power} onChange={(e) => setFormEquipo({ ...formEquipo, requiere_phantom_power: e.target.checked })} />
+                            Necesita Phantom Power (+48v) desde la consola
+                        </label>
+                    </div>
+
+                    <Field label="Notas técnicas (Opcional)">
+                        <Input
+                            type="text" value={formEquipo.notas_tecnicas}
+                            onChange={(e) => setFormEquipo({ ...formEquipo, notas_tecnicas: e.target.value })}
+                            placeholder="Ej: Se usa con caja directa, microfonear al centro del cono..."
+                        />
+                    </Field>
+
+                    <div className="flex justify-end gap-3 pt-4 mt-2" style={{ borderTop: "1px solid var(--ba-border)" }}>
+                        <Button type="button" variant="ghost" onClick={() => setMostrarModalEquipo(false)} disabled={subiendoEquipo}>Cancelar</Button>
+                        <Button type="submit" variant="primary" disabled={subiendoEquipo || !formEquipo.nombre}>
+                            {subiendoEquipo ? "Guardando..." : "Agregar al inventario"}
                         </Button>
                     </div>
                 </form>
