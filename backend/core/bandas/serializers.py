@@ -1,6 +1,6 @@
 from rest_framework import serializers
 # Agregamos 'Cancion' al final de tus importaciones desde .models
-from .models import Banda, Membresia, Ensayo, Invitacion, Gasto, Cancion, Equipamiento
+from .models import Banda, Membresia, Ensayo, Invitacion, Gasto, Cancion, Equipamiento, Pista, Toma, ComentarioAudio
 
 
 class BandaSerializer(serializers.ModelSerializer):
@@ -117,3 +117,40 @@ class EquipamientoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Equipamiento
         fields = '__all__'
+
+
+# --- SERIALIZADORES DEL MÓDULO MULTITRACK ---
+
+class ComentarioAudioSerializer(serializers.ModelSerializer):
+    nombre_usuario = serializers.ReadOnlyField(source='usuario.username')
+
+    class Meta:
+        model = ComentarioAudio
+        fields = ['id', 'toma', 'usuario', 'nombre_usuario',
+                  'texto', 'momento_segundos', 'fecha_creacion']
+        read_only_fields = ['usuario', 'fecha_creacion']
+
+
+class TomaSerializer(serializers.ModelSerializer):
+    nombre_usuario = serializers.ReadOnlyField(source='usuario.username')
+    # Contamos los comentarios sin traer todo el hilo, para listados livianos
+    total_comentarios = serializers.IntegerField(
+        source='comentarios.count', read_only=True)
+
+    class Meta:
+        model = Toma
+        fields = ['id', 'pista', 'usuario', 'nombre_usuario',
+                  'archivo_audio', 'fecha_subida', 'total_comentarios']
+        read_only_fields = ['usuario', 'fecha_subida']
+
+
+class PistaSerializer(serializers.ModelSerializer):
+    nombre_creador = serializers.ReadOnlyField(
+        source='creado_por.username', default=None)
+    tomas = TomaSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Pista
+        fields = ['id', 'cancion', 'nombre', 'creado_por',
+                  'nombre_creador', 'orden', 'fecha_creacion', 'tomas']
+        read_only_fields = ['creado_por', 'fecha_creacion']

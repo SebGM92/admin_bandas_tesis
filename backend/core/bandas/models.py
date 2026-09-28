@@ -262,3 +262,81 @@ class Equipamiento(models.Model):
 
     def __str__(self):
         return f"{self.cantidad}x {self.nombre} ({self.get_tipo_display()})"
+
+
+# --- MÓDULO MULTITRACK: Pistas (stems), Tomas y Comentarios con timestamp ---
+
+class Pista(models.Model):
+    """
+    Un 'stem' dentro de una Cancion (Ej: Voz principal, Línea de bajo, Batería).
+    Cada Pista puede acumular varias Tomas: versiones grabadas por distintos
+    integrantes de la banda encima de la misma idea.
+    """
+    cancion = models.ForeignKey(
+        Cancion, on_delete=models.CASCADE, related_name='pistas')
+    nombre = models.CharField(
+        max_length=100,
+        verbose_name='Nombre del stem',
+        help_text="Ej: Voz principal, Línea de bajo, Batería, Guitarra base"
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
+        related_name='pistas_creadas'
+    )
+    orden = models.PositiveIntegerField(default=0)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['orden', 'fecha_creacion']
+        verbose_name = 'Pista (Stem)'
+        verbose_name_plural = 'Pistas (Stems)'
+
+    def __str__(self):
+        return f"{self.nombre} - {self.cancion.titulo}"
+
+
+class Toma(models.Model):
+    """
+    Una grabación de audio subida por un integrante para una Pista/stem
+    específica. Varias Tomas de la misma Pista permiten comparar versiones
+    (ej: dos intentos distintos de la línea de bajo).
+    """
+    pista = models.ForeignKey(
+        Pista, on_delete=models.CASCADE, related_name='tomas')
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='tomas_grabadas')
+    archivo_audio = models.FileField(upload_to='multitrack/tomas/')
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-fecha_subida']
+        verbose_name = 'Toma'
+        verbose_name_plural = 'Tomas'
+
+    def __str__(self):
+        return f"Toma de {self.usuario.username} - {self.pista.nombre}"
+
+
+class ComentarioAudio(models.Model):
+    """
+    Comentario anclado a un instante preciso (en segundos) de una Toma,
+    como en un DAW/plataforma de colaboración musical.
+    """
+    toma = models.ForeignKey(
+        Toma, on_delete=models.CASCADE, related_name='comentarios')
+    usuario = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='comentarios_audio')
+    texto = models.TextField()
+    momento_segundos = models.FloatField(
+        verbose_name='Segundo exacto del comentario',
+        help_text="Posición en segundos dentro de la forma de onda"
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['momento_segundos']
+        verbose_name = 'Comentario de audio'
+        verbose_name_plural = 'Comentarios de audio'
+
+    def __str__(self):
+        return f"{self.usuario.username} @ {self.momento_segundos}s: {self.texto[:30]}"

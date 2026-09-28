@@ -6,8 +6,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from .models import Banda, Gasto, Membresia, Ensayo, Invitacion, Cancion, Equipamiento
-from .serializers import BandaSerializer, InvitacionSerializer, MembresiaSerializer, EnsayoSerializer, InvitacionSerializer, GastoSerializer, CancionSerializer, EquipamientoSerializer
+from .models import Banda, Gasto, Membresia, Ensayo, Invitacion, Cancion, Equipamiento, Pista, Toma, ComentarioAudio
+from .serializers import BandaSerializer, InvitacionSerializer, MembresiaSerializer, EnsayoSerializer, InvitacionSerializer, GastoSerializer, CancionSerializer, EquipamientoSerializer, PistaSerializer, TomaSerializer, ComentarioAudioSerializer
 from .pdf import generar_tech_rider_pdf
 
 
@@ -243,3 +243,105 @@ class EquipamientoViewSet(viewsets.ModelViewSet):
                 "No puedes registrar equipamiento en una banda a la que no perteneces.")
 
         serializer.save()
+
+
+# --- MÓDULO MULTITRACK ---
+
+class PistaViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para los 'stems' (Voz, Bajo, Batería, etc.) de una canción.
+    """
+    serializer_class = PistaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Seguridad: solo pistas de canciones de bandas a las que el usuario pertenece
+        queryset = Pista.objects.filter(
+            cancion__banda__membresias__usuario=self.request.user).distinct()
+
+        cancion_id = self.request.query_params.get('cancion', None)
+        if cancion_id:
+            queryset = queryset.filter(cancion_id=cancion_id)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        cancion = serializer.validated_data.get('cancion')
+
+        if not cancion.banda.membresias.filter(usuario=self.request.user).exists():
+            raise PermissionDenied(
+                "No puedes crear pistas en una canción de una banda a la que no perteneces.")
+
+        serializer.save(creado_por=self.request.user)
+
+
+class TomaViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para las grabaciones (tomas) que suben los integrantes a una Pista.
+    """
+    serializer_class = TomaSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Toma.objects.filter(
+            pista__cancion__banda__membresias__usuario=self.request.user).distinct()
+
+        pista_id = self.request.query_params.get('pista', None)
+        if pista_id:
+            queryset = queryset.filter(pista_id=pista_id)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        pista = serializer.validated_data.get('pista')
+
+        if not pista.cancion.banda.membresias.filter(usuario=self.request.user).exists():
+            raise PermissionDenied(
+                "No puedes subir tomas a una pista de una banda a la que no perteneces.")
+
+        serializer.save(usuario=self.request.user)
+
+
+class ComentarioAudioViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint para los comentarios anclados a un instante (en segundos) de una Toma.
+    """
+    serializer_class = ComentarioAudioSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = ComentarioAudio.objects.filter(
+            toma__pista__cancion__banda__membresias__usuario=self.request.user).distinct()
+
+        toma_id = self.request.query_params.get('toma', None)
+        if toma_id:
+            queryset = queryset.filter(toma_id=toma_id)
+
+        return queryset
+
+    def perform_create(self, serializer):
+        toma = serializer.validated_data.get('toma')
+
+        if not toma.pista.cancion.banda.membresias.filter(usuario=self.request.user).exists():
+            raise PermissionDenied(
+                "No puedes comentar en una toma de una banda a la que no perteneces.")
+
+        serializer.save(usuario=self.request.user)
+
+    def perform_update(self, serializer):
+        # Un comentario es la opinión de alguien puntual: solo su autor puede editarlo
+        if serializer.instance.usuario != self.request.user:
+            raise PermissionDenied("Solo puedes editar tus propios comentarios.")
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        # El autor del comentario o el líder de la banda pueden eliminarlo (moderación)
+        banda = instance.toma.pista.cancion.banda
+        es_lider = banda.membresias.filter(
+            usuario=self.request.user, rol='Líder').exists()
+
+        if instance.usuario != self.request.user and not es_lider:
+            raise PermissionDenied(
+                "No tienes permiso para eliminar este comentario.")
+
+        instance.delete()

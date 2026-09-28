@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Banda, Membresia, Ensayo, InstrumentoProxy
+from .models import Banda, Membresia, Ensayo, InstrumentoProxy, Pista, Toma, ComentarioAudio
 
 
 @admin.register(Banda)
@@ -26,3 +26,21 @@ class EnsayoAdmin(admin.ModelAdmin):
 class InstrumentoAdmin(admin.ModelAdmin):
     list_display = ('id', 'nombre', 'familia')
     readonly_fields = ('id',)
+
+
+@admin.register(Pista)
+class PistaAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'cancion', 'creado_por', 'orden', 'fecha_creacion')
+    list_filter = ('cancion__banda',)
+
+
+@admin.register(Toma)
+class TomaAdmin(admin.ModelAdmin):
+    list_display = ('pista', 'usuario', 'fecha_subida')
+    list_filter = ('pista__cancion__banda',)
+
+
+@admin.register(ComentarioAudio)
+class ComentarioAudioAdmin(admin.ModelAdmin):
+    list_display = ('toma', 'usuario', 'momento_segundos', 'fecha_creacion')
+    list_filter = ('toma__pista__cancion__banda',)
