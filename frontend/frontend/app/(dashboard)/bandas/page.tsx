@@ -130,7 +130,11 @@ export default function PerfilBanda() {
     useEffect(() => {
         const cargarDetalleBanda = async () => {
             const token = localStorage.getItem("access_token");
-            if (!token) return;
+            if (!token || !id || id === 'undefined') {
+                setCargando(false);
+                return;
+            }
+
             try {
                 const res = await fetch(`${API_URL}/api/v1/bandas/${id}/`, {
                     headers: { "Authorization": `Bearer ${token}` },
