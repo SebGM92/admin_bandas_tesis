@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     # --- Aplicaciones de tu proyecto ---
     'usuarios',
     'bandas',
-    'catalogo',
 ]
 
 MIDDLEWARE = [
