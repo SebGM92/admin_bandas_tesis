@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import BandaViewSet, GastoViewSet, InvitacionViewSet, MembresiaViewSet, EnsayoViewSet, CancionViewSet
+from .views import BandaViewSet, GastoViewSet, InvitacionViewSet, MembresiaViewSet, EnsayoViewSet, CancionViewSet, EquipamientoViewSet
 
 # El router crea automáticamente las URLs para nuestro CRUD
 router = DefaultRouter()
@@ -10,6 +10,7 @@ router.register(r'ensayos', EnsayoViewSet, basename='ensayo')
 router.register(r'invitaciones', InvitacionViewSet, basename='invitacion')
 router.register(r'gastos', GastoViewSet, basename='gasto')
 router.register(r'canciones', CancionViewSet, basename='canciones')
+router.register(r'equipamiento', EquipamientoViewSet, basename='equipamiento')
 
 urlpatterns = [
     path('', include(router.urls)),

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 # Agregamos 'Cancion' al final de tus importaciones desde .models
-from .models import Banda, Membresia, Ensayo, Invitacion, Gasto, Cancion
+from .models import Banda, Membresia, Ensayo, Invitacion, Gasto, Cancion, Equipamiento
 
 
 class BandaSerializer(serializers.ModelSerializer):
@@ -107,3 +107,13 @@ class CancionSerializer(serializers.ModelSerializer):
             'en_setlist',
             'archivo_audio'
         ]
+
+
+class EquipamientoSerializer(serializers.ModelSerializer):
+    # Campo de solo lectura para mandar el texto bonito al frontend
+    tipo_display = serializers.CharField(
+        source='get_tipo_display', read_only=True)
+
+    class Meta:
+        model = Equipamiento
+        fields = '__all__'

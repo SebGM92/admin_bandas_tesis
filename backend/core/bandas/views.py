@@ -4,8 +4,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
-from .models import Banda, Gasto, Membresia, Ensayo, Invitacion, Cancion
-from .serializers import BandaSerializer, InvitacionSerializer, MembresiaSerializer, EnsayoSerializer, InvitacionSerializer, GastoSerializer, CancionSerializer
+from .models import Banda, Gasto, Membresia, Ensayo, Invitacion, Cancion, Equipamiento
+from .serializers import BandaSerializer, InvitacionSerializer, MembresiaSerializer, EnsayoSerializer, InvitacionSerializer, GastoSerializer, CancionSerializer, EquipamientoSerializer
 
 
 class BandaViewSet(viewsets.ModelViewSet):
@@ -183,3 +183,22 @@ class GastoViewSet(viewsets.ModelViewSet):
 
         # Guardamos automáticamente al usuario logueado como el que pagó
         serializer.save(pagado_por=self.request.user)
+
+
+class EquipamientoViewSet(viewsets.ModelViewSet):
+    serializer_class = EquipamientoSerializer
+    permission_classes = [IsAuthenticated]  # Solo usuarios logueados
+
+    def get_queryset(self):
+        """
+        Permite filtrar el equipamiento enviando el ID de la banda por URL.
+        Ejemplo: /api/v1/equipamiento/?banda=2
+        """
+        queryset = Equipamiento.objects.all()
+        banda_id = self.request.query_params.get('banda', None)
+
+        if banda_id is not None:
+            # Filtramos solo los equipos de la banda solicitada
+            queryset = queryset.filter(banda_id=banda_id)
+
+        return queryset

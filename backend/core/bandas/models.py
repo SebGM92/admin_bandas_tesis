@@ -200,3 +200,65 @@ class InstrumentoProxy(Instrumento):
         # El nombre que se mostrará en la interfaz
         verbose_name = 'Instrumento'
         verbose_name_plural = 'Instrumentos'
+
+
+class Equipamiento(models.Model):
+    TIPO_EQUIPO_CHOICES = [
+        ('INSTRUMENTO', 'Instrumento (Guitarras, Bajos, Teclados)'),
+        ('MICROFONIA', 'Microfonía (Dinámicos, Condensador, Inalámbricos)'),
+        ('MONITOREO', 'Monitoreo (In-Ears, Monitores Activos)'),
+        ('BACKLINE', 'Backline (Amplificadores, Baterías)'),
+        ('ACCESORIOS', 'Accesorios (Cables XLR, Cajas Directas, Pedales)'),
+    ]
+
+    banda = models.ForeignKey(
+        'Banda',  # Asegúrate de que coincida con el nombre de tu modelo de banda
+        on_delete=models.CASCADE,
+        related_name='equipamiento'
+    )
+
+    nombre = models.CharField(
+        max_length=150,
+        help_text="Ej: Gibson Gold Top Les Paul P90, Monitor Activo Wharfedale..."
+    )
+    tipo = models.CharField(
+        max_length=20,
+        choices=TIPO_EQUIPO_CHOICES,
+        default='INSTRUMENTO'
+    )
+    marca_modelo = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        help_text="Ej: Shure SM58, Behringer DI20, Klotz XLR"
+    )
+    cantidad = models.PositiveIntegerField(default=1)
+
+    # Datos críticos para el ingeniero de sonido (Tech Rider)
+    propio = models.BooleanField(
+        default=True,
+        help_text="¿La banda lleva este equipo o lo debe proveer el local?"
+    )
+    requiere_corriente = models.BooleanField(
+        default=False,
+        help_text="¿Necesita enchufe 220v en el escenario?"
+    )
+    requiere_phantom_power = models.BooleanField(
+        default=False,
+        help_text="¿Necesita +48v desde la consola?"
+    )
+
+    notas_tecnicas = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Instrucciones para el sonidista. Ej: 'Se usa con caja directa', 'Microfonear al centro del cono'."
+    )
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['tipo', 'nombre']
+        verbose_name = "Equipamiento"
+        verbose_name_plural = "Equipamientos"
+
+    def __str__(self):
+        return f"{self.cantidad}x {self.nombre} ({self.get_tipo_display()})"
