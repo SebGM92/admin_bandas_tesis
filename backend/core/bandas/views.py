@@ -194,11 +194,25 @@ class EquipamientoViewSet(viewsets.ModelViewSet):
         Permite filtrar el equipamiento enviando el ID de la banda por URL.
         Ejemplo: /api/v1/equipamiento/?banda=2
         """
-        queryset = Equipamiento.objects.all()
-        banda_id = self.request.query_params.get('banda', None)
+        usuario = self.request.user
 
+        # Seguridad: Solo equipamiento de bandas a las que el usuario pertenece
+        queryset = Equipamiento.objects.filter(
+            banda__membresias__usuario=usuario).distinct()
+
+        banda_id = self.request.query_params.get('banda', None)
         if banda_id is not None:
             # Filtramos solo los equipos de la banda solicitada
             queryset = queryset.filter(banda_id=banda_id)
 
         return queryset
+
+    def perform_create(self, serializer):
+        banda = serializer.validated_data.get('banda')
+
+        # Verificamos que el usuario pertenezca a la banda antes de registrar el equipo
+        if not banda.membresias.filter(usuario=self.request.user).exists():
+            raise PermissionDenied(
+                "No puedes registrar equipamiento en una banda a la que no perteneces.")
+
+        serializer.save()
