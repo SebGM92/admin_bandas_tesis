@@ -1,3 +1,5 @@
+from django.http import HttpResponse
+from django.utils.text import slugify
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
@@ -6,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 from .models import Banda, Gasto, Membresia, Ensayo, Invitacion, Cancion, Equipamiento
 from .serializers import BandaSerializer, InvitacionSerializer, MembresiaSerializer, EnsayoSerializer, InvitacionSerializer, GastoSerializer, CancionSerializer, EquipamientoSerializer
+from .pdf import generar_tech_rider_pdf
 
 
 class BandaViewSet(viewsets.ModelViewSet):
@@ -27,6 +30,25 @@ class BandaViewSet(viewsets.ModelViewSet):
             rol='Líder',
             es_administrador=True
         )
+
+    # --- ENDPOINT PARA DESCARGAR EL TECH RIDER EN PDF ---
+    # Ruta: GET /api/v1/bandas/{id}/tech-rider-pdf/
+    @action(detail=True, methods=['get'], url_path='tech-rider-pdf')
+    def tech_rider_pdf(self, request, pk=None):
+        banda = self.get_object()
+
+        # Seguridad: solo un miembro de la banda puede descargar su Tech Rider
+        if not banda.membresias.filter(usuario=request.user).exists():
+            raise PermissionDenied(
+                "No perteneces a esta banda, no puedes descargar su Tech Rider.")
+
+        equipos = banda.equipamiento.all()
+        buffer = generar_tech_rider_pdf(banda, equipos)
+
+        nombre_archivo = f"tech-rider-{slugify(banda.nombre) or 'banda'}.pdf"
+        response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
+        return response
 
 
 class MembresiaViewSet(viewsets.ModelViewSet):
