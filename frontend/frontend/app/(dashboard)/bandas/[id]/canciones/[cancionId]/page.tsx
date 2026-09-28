@@ -6,6 +6,7 @@ import Link from "next/link";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin, { type Region } from "wavesurfer.js/plugins/regions";
 import { Card, Button, IconButton, Avatar, Badge, Modal, Field, Input, EmptyState } from "@/components/ui/ui";
+import { UpgradeProModal } from "@/components/UpgradeProModal";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -54,6 +55,13 @@ function tokenColor(nombre: string) {
     return getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
 }
 
+// Cuando el backend responde 402 (límite del plan Free), el mensaje viene
+// en 'detail' (DRF APIException). Lo extraemos con un fallback por si acaso.
+async function extraerMensaje402(res: Response, fallback: string) {
+    const data = await res.json().catch(() => null);
+    return data?.detail || fallback;
+}
+
 function formatearTiempo(segundos: number) {
     if (!Number.isFinite(segundos) || segundos < 0) segundos = 0;
     const m = Math.floor(segundos / 60);
@@ -62,7 +70,13 @@ function formatearTiempo(segundos: number) {
 }
 
 // --- REPRODUCTOR CON MARCADORES DE COMENTARIOS SOBRE LA FORMA DE ONDA ---
-function ReproductorConComentarios({ toma, onEliminarToma }: { toma: TomaData; onEliminarToma: () => void }) {
+function ReproductorConComentarios({
+    toma, onEliminarToma, onLimiteFreemium
+}: {
+    toma: TomaData;
+    onEliminarToma: () => void;
+    onLimiteFreemium: (mensaje: string) => void;
+}) {
     const contenedorRef = useRef<HTMLDivElement>(null);
     const wavesurferRef = useRef<WaveSurfer | null>(null);
     const regionsRef = useRef<RegionsPlugin | null>(null);
@@ -170,6 +184,8 @@ function ReproductorConComentarios({ toma, onEliminarToma }: { toma: TomaData; o
                 const nuevo = await res.json();
                 setComentarios(prev => [...prev, nuevo].sort((a, b) => a.momento_segundos - b.momento_segundos));
                 setTextoComentario("");
+            } else if (res.status === 402) {
+                onLimiteFreemium(await extraerMensaje402(res, "Alcanzaste el límite de comentarios del plan gratuito."));
             } else {
                 alert("No se pudo publicar el comentario.");
             }
@@ -262,12 +278,13 @@ function ReproductorConComentarios({ toma, onEliminarToma }: { toma: TomaData; o
 
 // --- TARJETA DE UN STEM (PISTA) CON SUS TOMAS ---
 function TarjetaPista({
-    pista, onTomaSubida, onEliminarPista, onEliminarToma
+    pista, onTomaSubida, onEliminarPista, onEliminarToma, onLimiteFreemium
 }: {
     pista: PistaData;
     onTomaSubida: (pistaId: number, toma: TomaData) => void;
     onEliminarPista: (pistaId: number) => void;
     onEliminarToma: (pistaId: number, tomaId: number) => void;
+    onLimiteFreemium: (mensaje: string) => void;
 }) {
     const [subiendoToma, setSubiendoToma] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -289,6 +306,8 @@ function TarjetaPista({
             if (res.ok) {
                 const nuevaToma = await res.json();
                 onTomaSubida(pista.id, nuevaToma);
+            } else if (res.status === 402) {
+                onLimiteFreemium(await extraerMensaje402(res, "Alcanzaste el límite de tomas del plan gratuito."));
             } else {
                 alert("No se pudo subir la toma.");
             }
@@ -337,6 +356,7 @@ function TarjetaPista({
                             <ReproductorConComentarios
                                 toma={toma}
                                 onEliminarToma={() => onEliminarToma(pista.id, toma.id)}
+                                onLimiteFreemium={onLimiteFreemium}
                             />
                         </div>
                     ))}
@@ -358,6 +378,8 @@ export default function PerfilCancion() {
     const [mostrarModalPista, setMostrarModalPista] = useState(false);
     const [nombrePista, setNombrePista] = useState("");
     const [creandoPista, setCreandoPista] = useState(false);
+
+    const [mensajeUpgrade, setMensajeUpgrade] = useState<string | null>(null);
 
     useEffect(() => {
         const cargarEstudio = async () => {
@@ -398,6 +420,9 @@ export default function PerfilCancion() {
                 setPistas(prev => [...prev, nueva]);
                 setMostrarModalPista(false);
                 setNombrePista("");
+            } else if (res.status === 402) {
+                setMostrarModalPista(false);
+                setMensajeUpgrade(await extraerMensaje402(res, "Alcanzaste el límite de stems del plan gratuito."));
             } else {
                 alert("No se pudo crear el stem.");
             }
@@ -493,6 +518,7 @@ export default function PerfilCancion() {
                             onTomaSubida={handleTomaSubida}
                             onEliminarPista={handleEliminarPista}
                             onEliminarToma={handleEliminarToma}
+                            onLimiteFreemium={setMensajeUpgrade}
                         />
                     ))}
                 </div>
@@ -518,6 +544,8 @@ export default function PerfilCancion() {
                     </div>
                 </form>
             </Modal>
+
+            <UpgradeProModal mensaje={mensajeUpgrade} onClose={() => setMensajeUpgrade(null)} />
         </div>
     );
 }

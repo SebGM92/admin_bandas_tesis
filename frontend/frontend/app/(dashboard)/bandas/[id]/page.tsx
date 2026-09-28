@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import WaveSurfer from "wavesurfer.js";
 import { Card, Button, IconButton, Badge, Avatar, Modal, Field, Input, EmptyState } from "@/components/ui/ui";
+import { UpgradeProModal } from "@/components/UpgradeProModal";
 
 // 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente una sola vez
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -128,6 +129,7 @@ export default function PerfilBanda() {
     const [mostrarModalEquipo, setMostrarModalEquipo] = useState(false);
     const [subiendoEquipo, setSubiendoEquipo] = useState(false);
     const [generandoPDF, setGenerandoPDF] = useState(false);
+    const [mensajeUpgrade, setMensajeUpgrade] = useState<string | null>(null);
     const [formEquipo, setFormEquipo] = useState({
         nombre: "",
         tipo: "INSTRUMENTO",
@@ -402,7 +404,12 @@ export default function PerfilBanda() {
             });
 
             if (!res.ok) {
-                alert("No se pudo generar el PDF del Tech Rider.");
+                if (res.status === 402) {
+                    const data = await res.json().catch(() => null);
+                    setMensajeUpgrade(data?.detail || "Alcanzaste el límite de exportaciones del plan gratuito.");
+                } else {
+                    alert("No se pudo generar el PDF del Tech Rider.");
+                }
                 return;
             }
 
@@ -779,6 +786,8 @@ export default function PerfilBanda() {
                     </div>
                 </form>
             </Modal>
+
+            <UpgradeProModal mensaje={mensajeUpgrade} onClose={() => setMensajeUpgrade(null)} />
         </div>
     );
 }

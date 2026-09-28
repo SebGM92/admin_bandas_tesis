@@ -23,6 +23,7 @@ const NAV_ITEMS = [
     { href: "/catalogo", label: "Catálogo", icon: "music" },
     { href: "/ensayos", label: "Ensayos", icon: "calendar-event" },
     { href: "/finanzas", label: "Finanzas", icon: "file-invoice" },
+    { href: "/planes", label: "Plan", icon: "crown" },
 ];
 
 function DashboardContent({ children }: { children: React.ReactNode }) {

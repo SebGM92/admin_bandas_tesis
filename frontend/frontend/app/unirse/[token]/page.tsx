@@ -13,7 +13,7 @@ export default function UnirseBanda() {
     const router = useRouter();
     const tokenInvitacion = params.token as string;
 
-    const [estado, setEstado] = useState<"cargando" | "exito" | "error">("cargando");
+    const [estado, setEstado] = useState<"cargando" | "exito" | "error" | "limite_plan">("cargando");
     const [mensaje, setMensaje] = useState("Validando tu invitación segura...");
     const [bandaId, setBandaId] = useState<number | null>(null);
 
@@ -49,6 +49,9 @@ export default function UnirseBanda() {
                     setTimeout(() => {
                         router.push('/bandas');
                     }, 3000);
+                } else if (res.status === 402) {
+                    setEstado("limite_plan");
+                    setMensaje(data.error || "Tu cuenta gratuita ya pertenece a una banda.");
                 } else {
                     setEstado("error");
                     setMensaje(data.error || "No se pudo procesar la invitación.");
@@ -86,6 +89,17 @@ export default function UnirseBanda() {
 
                             <Link href="/bandas">
                                 <Button variant="primary" block>Ir a mis bandas ahora</Button>
+                            </Link>
+                        </div>
+                    )}
+
+                    {estado === "limite_plan" && (
+                        <div>
+                            <StatusIcon icon="crown" tone="warning" />
+                            <h2 className="text-xl font-bold mb-2" style={{ color: "var(--ba-text)" }}>Necesitas el plan Pro</h2>
+                            <p className="mb-6" style={{ color: "var(--ba-text-muted)" }}>{mensaje}</p>
+                            <Link href="/planes">
+                                <Button variant="primary" block icon="crown">Ver planes Pro</Button>
                             </Link>
                         </div>
                     )}

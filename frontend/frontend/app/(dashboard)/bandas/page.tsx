@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Card, Field, Input, Button, IconButton, Modal, EmptyState } from "@/components/ui/ui";
+import { UpgradeProModal } from "@/components/UpgradeProModal";
 
 // 🔥 CAMBIO CRÍTICO: Definimos la URL de la API dinámicamente
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
@@ -28,6 +29,9 @@ export default function MisBandas() {
     const [bandaAInvitar, setBandaAInvitar] = useState<Banda | null>(null);
     const [enlaceGenerado, setEnlaceGenerado] = useState("");
     const [generando, setGenerando] = useState(false);
+
+    // --- LÍMITE DEL PLAN FREE ---
+    const [mensajeUpgrade, setMensajeUpgrade] = useState<string | null>(null);
 
     // --- CARGAR BANDAS ---
     useEffect(() => {
@@ -85,6 +89,13 @@ export default function MisBandas() {
                 setNombreBanda("");
                 // Forzamos la recarga para que el Dashboard lea el Rol: Líder
                 window.location.href = "/";
+                return;
+            }
+
+            const data = await res.json().catch(() => null);
+            if (res.status === 402) {
+                setMostrarModalCrear(false);
+                setMensajeUpgrade(data?.detail || "Alcanzaste el límite de bandas del plan gratuito.");
             } else {
                 alert("Error al crear la banda. Revisa la consola.");
             }
@@ -272,6 +283,8 @@ export default function MisBandas() {
                     <Button variant="ghost" onClick={cerrarModalInvitar}>Cerrar</Button>
                 </div>
             </Modal>
+
+            <UpgradeProModal mensaje={mensajeUpgrade} onClose={() => setMensajeUpgrade(null)} />
         </div>
     );
 }
