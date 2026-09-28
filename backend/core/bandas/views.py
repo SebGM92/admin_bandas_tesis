@@ -15,9 +15,14 @@ class BandaViewSet(viewsets.ModelViewSet):
     """
     API endpoint que permite ver o editar bandas.
     """
-    queryset = Banda.objects.all()
     serializer_class = BandaSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Seguridad: un usuario solo puede ver/editar/borrar las bandas
+        # a las que pertenece (igual que el resto de los ViewSets).
+        return Banda.objects.filter(
+            membresias__usuario=self.request.user).distinct()
 
     def perform_create(self, serializer):
         # 1. Guardamos la banda en la base de datos
